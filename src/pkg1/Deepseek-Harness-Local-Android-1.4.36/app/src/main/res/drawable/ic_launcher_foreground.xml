@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 毛玻璃应用图标前景（v1.9.1）
-     玻璃面板：径向渐变（中心偏暗、四周受光）+ 顶部薄雾高光 + 1.5dp 白色内描边，最后叠加白鲸字标。
-     适配 adaptive icon 108dp 层，圆角 24dp 与原图标一致；矢量实现，不再依赖 PNG。 -->
+<!-- 毛玻璃应用图标前景（v1.9.2）
+     玻璃面做满幅（full-bleed）：渐变铺满整个 108dp 层，不画方形边线，
+     这样被启动器的圆形/方圆遮罩裁切时不会露出"被切掉的图标边缘"；
+     白鲸与 HARNESS 字标整体收在 66dp 安全圈内，任何遮罩下都完整可见。纯矢量，无 PNG。 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 玻璃底 -->
+    <!-- 玻璃面：中心偏暗、四周受光 -->
     <item>
         <shape android:shape="rectangle">
             <gradient
-                android:centerColor="#FF121416"
+                android:centerColor="#FF15181A"
                 android:centerX="0.5"
                 android:centerY="0.42"
-                android:endColor="#FF42464A"
-                android:gradientRadius="72dp"
+                android:endColor="#FF45494D"
+                android:gradientRadius="76dp"
                 android:startColor="#FF060708"
                 android:type="radial" />
-            <corners android:radius="24dp" />
         </shape>
     </item>
     <!-- 顶部薄雾高光 -->
@@ -23,18 +23,7 @@
             <gradient
                 android:angle="270"
                 android:endColor="#00FFFFFF"
-                android:startColor="#26FFFFFF" />
-            <corners android:radius="24dp" />
-        </shape>
-    </item>
-    <!-- 玻璃内描边 -->
-    <item>
-        <shape android:shape="rectangle">
-            <solid android:color="@android:color/transparent" />
-            <stroke
-                android:width="1.5dp"
-                android:color="#59FFFFFF" />
-            <corners android:radius="24dp" />
+                android:startColor="#1FFFFFFF" />
         </shape>
     </item>
     <!-- 白鲸 + HARNESS 字标 -->
