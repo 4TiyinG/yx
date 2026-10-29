@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 顶栏毛玻璃（v1.5.1）：高透明度深色渐变 + 细描边。
+     说明：View 级无法真正模糊身后内容（Android 无公开 backdrop blur API），
+     用高透明度 + 顶部渐变高光获得玻璃观感，且不引入额外合成开销（低配机友好）。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:startColor="#C210141A"
+        android:endColor="#9C0B0F14"
+        android:angle="270" />
+    <corners android:radius="22dp" />
+    <stroke android:width="0.5dp" android:color="#33FFFFFF" />
+</shape>

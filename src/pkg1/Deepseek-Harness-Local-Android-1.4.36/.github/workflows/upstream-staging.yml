@@ -1,0 +1,319 @@
+name: upstream-staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      dsh_version:
+        description: "Upstream dsh version to stage"
+        required: true
+        default: "0.2.1-rc.2"
+
+permissions:
+  contents: read
+
+jobs:
+  collect:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - termux_arch: aarch64
+            abi: arm64-v8a
+          - termux_arch: x86_64
+            abi: x86_64
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Collect upstream runtime (${{ matrix.termux_arch }})
+        env:
+          DSH_VERSION: ${{ inputs.dsh_version }}
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq apt dpkg-dev zip
+          chmod +x scripts/collect-termux-runtime.sh
+          ./scripts/collect-termux-runtime.sh runtime.zip "${{ matrix.termux_arch }}"
+      - name: Verify runtime closure, ABI, and Android patch markers
+        env:
+          EXPECT_ABI: ${{ matrix.abi }}
+          TERMUX_ARCH: ${{ matrix.termux_arch }}
+        run: |
+          set -euo pipefail
+          python3 scripts/verify-runtime-abi.py runtime.zip "$EXPECT_ABI"
+          rm -rf runtime-check && mkdir runtime-check
+          unzip -q runtime.zip -d runtime-check
+          python3 - <<'PY'
+          import glob
+          import os
+          import sys
+
+          root = "runtime-check"
+          failures = []
+          checked = 0
+
+          def record(label, problem):
+              failures.append(f"{label}: {problem}")
+
+          def check_exec(rel):
+              global checked
+              checked += 1
+              path = os.path.join(root, rel)
+              if not os.path.isfile(path):
+                  record("EXEC", f"MISSING_FILE {rel}")
+              elif not os.access(path, os.X_OK):
+                  record("EXEC", f"NOT_EXECUTABLE {rel}")
+              else:
+                  print(f"OK exec {rel}")
+
+          def check_file(rel):
+              global checked
+              checked += 1
+              path = os.path.join(root, rel)
+              if not os.path.isfile(path):
+                  record("FILE", f"MISSING_FILE {rel}")
+              else:
+                  print(f"OK file {rel}")
+
+          def check_elf_machine(rel, machine):
+              global checked
+              checked += 1
+              path = os.path.join(root, rel)
+              try:
+                  with open(path, "rb") as handle:
+                      header = handle.read(20)
+              except OSError as error:
+                  record("ELF", f"READ_ERROR {rel}: {error}")
+                  return
+              if len(header) < 20 or header[:4] != b"\x7fELF":
+                  record("ELF", f"NOT_ELF {rel}")
+                  return
+              actual = int.from_bytes(header[18:20], "little")
+              if actual != machine:
+                  record("ELF", f"WRONG_MACHINE {rel} actual={actual} expected={machine}")
+              else:
+                  print(f"OK ELF {rel} e_machine={actual}")
+
+          def check_marker(label, pattern, marker):
+              """Each glob must resolve to at least one file; every match must carry marker."""
+              global checked
+              checked += 1
+              matches = sorted(glob.glob(os.path.join(root, "**", pattern), recursive=True))
+              if not matches:
+                  record(f"MARKER {label}", f"MISSING_PATH pattern={pattern}")
+                  return
+              bad = []
+              for path in matches:
+                  try:
+                      with open(path, encoding="utf-8", errors="replace") as handle:
+                          text = handle.read()
+                  except OSError as error:
+                      bad.append(f"READ_ERROR {path}: {error}")
+                      continue
+                  if marker not in text:
+                      bad.append(f"MISSING_TEXT marker={marker!r} path={path}")
+              if bad:
+                  for problem in bad:
+                      record(f"MARKER {label}", problem)
+              else:
+                  print(f"OK marker {label}: {marker!r} -> {matches[0]}")
+
+          def check_absent(label, pattern, needle):
+              global checked
+              checked += 1
+              matches = sorted(glob.glob(os.path.join(root, "**", pattern), recursive=True))
+              if not matches:
+                  record(f"ABSENT {label}", f"MISSING_PATH pattern={pattern}")
+                  return
+              bad = []
+              for path in matches:
+                  try:
+                      with open(path, encoding="utf-8", errors="replace") as handle:
+                          text = handle.read()
+                  except OSError as error:
+                      bad.append(f"READ_ERROR {path}: {error}")
+                      continue
+                  if needle in text:
+                      bad.append(f"UNEXPECTED_TEXT {needle!r} path={path}")
+              if bad:
+                  for problem in bad:
+                      record(f"ABSENT {label}", problem)
+              else:
+                  print(f"OK absent {label}: {needle!r}")
+
+          # 1) Command closure and SONAME aliases (Android linker matches NEEDED literally).
+          for rel in ("bin/node", "bin/bash", "bin/rg", "bin/pnpm", "bin/curl"):
+              check_exec(rel)
+          for rel in (
+              "lib/libreadline.so.8",
+              "lib/libhistory.so.8",
+              "lib/libncursesw.so.6",
+              "lib/libncurses.so.6",
+              "lib/libiconv.so",
+              "lib/libpcre2-8.so",
+          ):
+              check_file(rel)
+          check_file("usr/bin/.keep")
+
+          # 2) Android ripgrep must exist; host Linux ripgrep must not leak in.
+          node_arch = {"aarch64": "arm64", "x86_64": "x64"}.get(os.environ["TERMUX_ARCH"])
+          elf_machine = {"aarch64": 183, "x86_64": 62}.get(os.environ["TERMUX_ARCH"])
+          if node_arch is None or elf_machine is None:
+              record("RIPGREP", f"unknown TERMUX_ARCH {os.environ['TERMUX_ARCH']!r}")
+          else:
+              check_exec(f"lib/node_modules/@vscode/ripgrep-android-{node_arch}/bin/rg")
+              # The resolver may pick bin/rg directly; both copies must be the
+              # target ELF, not a host Linux x86_64 binary that merely runs.
+              # bin/bash is checked too: an executable wrong-arch shell is the
+              # same class of failure as the v1.2.97 wrong-arch node incident.
+              check_elf_machine("bin/bash", elf_machine)
+              check_elf_machine("bin/rg", elf_machine)
+              check_elf_machine(
+                  f"lib/node_modules/@vscode/ripgrep-android-{node_arch}/bin/rg",
+                  elf_machine,
+              )
+          linux_rg = []
+          for dirpath, dirnames, filenames in os.walk(root):
+              if os.path.basename(dirpath).startswith("ripgrep-linux-"):
+                  linux_rg.append(dirpath)
+          checked += 1
+          if linux_rg:
+              record("LINUX_RIPGREP", "leaked into Android runtime: " + ", ".join(sorted(linux_rg)))
+          else:
+              print("OK no Linux ripgrep")
+
+          # 3) Every Android patch must leave its marker. A missing glob is a hard failure;
+          #    no grep-from-stdin path can turn an empty find into a false positive.
+          check_marker(
+              "node-addon-require-builtin",
+              "node-addon-require-builtin/lib/index.js",
+              "android-js-fallback",
+          )
+          check_marker(
+              "attachment-local",
+              "dsh-attachment-local/lib/index.js",
+              "isAndroidUnsyncableLevel",
+          )
+          check_marker(
+              "attachment-local-link-shim",
+              "dsh-attachment-local/lib/index.js",
+              "COPYFILE_EXCL",
+          )
+          check_marker(
+              "session-persistence-rename",
+              "dsh-session-persistence-jsonl/lib/index.js",
+              "rename as link",
+          )
+          check_marker("flock", "node-addon-system/lib/flock.js", "dsh-android")
+          check_marker("node-pty-implementation", "node-pty/lib/index.js", "dsh_pty_exec")
+          check_marker(
+              "node-pty-package-marker",
+              "node-pty/package.json",
+              "0.0.0-android-ptyexec",
+          )
+          check_absent(
+              "node-pty-shim",
+              "node-pty/lib/index.js",
+              "node-pty unavailable in this Android build",
+          )
+          check_marker(
+              "subprocess-runner-android",
+              "dsh-subprocess-local/lib/runner-launch-*.js",
+              'platform === "linux" || platform === "android"',
+          )
+          check_marker(
+              "subprocess-activity-android",
+              "dsh-subprocess-local/lib/index.js",
+              '(this.platform === "linux" || this.platform === "android") && observed.complete === true',
+          )
+          check_marker(
+              "webview-polyfill",
+              "dsh-web-frontend/dist/index.html",
+              "legacy-webview polyfill",
+          )
+
+          if failures:
+              print("", file=sys.stderr)
+              print(
+                  f"STAGING VALIDATION FAILED: {len(failures)} problem(s) "
+                  f"across {checked} check(s)",
+                  file=sys.stderr,
+              )
+              for failure in failures:
+                  print(f"  - {failure}", file=sys.stderr)
+              sys.exit(1)
+          print(f"STAGING VALIDATION PASSED: {checked} checks")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: upstream-runtime-${{ matrix.abi }}
+          path: runtime.zip
+          if-no-files-found: error
+          retention-days: 3
+
+  build-debug:
+    needs: collect
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - abi: arm64-v8a
+          - abi: x86_64
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: upstream-runtime-${{ matrix.abi }}
+          path: app/src/main/assets
+      - name: Pin staged runtime ABI
+        run: printf '%s\n' '${{ matrix.abi }}' > app/src/main/assets/runtime/.abi
+      - name: Update staged manifest
+        run: |
+          SHA=$(sha256sum app/src/main/assets/runtime.zip | cut -d' ' -f1)
+          jq --arg sha "$SHA" --arg ver "upstream-${{ inputs.dsh_version }}-${{ matrix.abi }}" \
+            '.version=$ver | .sha256=$sha' app/src/main/assets/runtime/MANIFEST.json > /tmp/m.json
+          mv /tmp/m.json app/src/main/assets/runtime/MANIFEST.json
+      - name: Record staged runtime checksum
+        id: staged
+        run: echo "sha256=$(sha256sum app/src/main/assets/runtime.zip | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+      - name: Build staged debug APK
+        run: |
+          set -o pipefail
+          gradle -p . assembleDebug -Pabi=${{ matrix.abi }} --stacktrace 2>&1 | tee staged-${{ matrix.abi }}.log
+      - name: Verify staged APK ABI
+        run: python3 scripts/verify-runtime-abi.py app/build/outputs/apk/debug/app-debug.apk "${{ matrix.abi }}"
+      - name: Verify staged APK embeds the staged runtime
+        env:
+          EXPECT_SHA: ${{ steps.staged.outputs.sha256 }}
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import os
+          import zipfile
+
+          with zipfile.ZipFile("app/build/outputs/apk/debug/app-debug.apk") as apk:
+              embedded = hashlib.sha256(apk.read("assets/runtime.zip")).hexdigest()
+          expected = os.environ["EXPECT_SHA"].strip().lower()
+          if embedded != expected:
+              raise SystemExit(
+                  "staged runtime mismatch: APK embeds sha256="
+                  + embedded
+                  + ", expected "
+                  + expected
+              )
+          print("APK embeds staged runtime sha256:", embedded)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: upstream-debug-apk-${{ matrix.abi }}
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            staged-${{ matrix.abi }}.log
+          if-no-files-found: error
+          retention-days: 3

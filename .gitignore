@@ -1,3 +1,14 @@
+# 本地工具链（3-5G，绝不入库）
+env/
+.uploads/
+
+# Android 构建中间产物
+.gradle/
+build/
+src/*/*/build/
+src/*/*/app/build/
+*.iml
+
 node_modules/
 target/
 __pycache__/

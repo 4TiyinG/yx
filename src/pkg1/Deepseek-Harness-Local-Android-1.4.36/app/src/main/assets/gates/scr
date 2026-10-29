@@ -1,0 +1,329 @@
+#!/system/bin/sh
+# [dsh-android] 自举到引擎 bash（/dev/tcp 是 bash 特性，toybox sh 不支持）。
+# shebang 机制不传环境变量，故显式设 LD_LIBRARY_PATH 后 exec；
+# _DSH_REEXEC 标记防止 exec "$0" 造成无限递归。
+if [ -z "$_DSH_REEXEC" ]; then
+  _DSH_REEXEC=1; export _DSH_REEXEC
+  LD_LIBRARY_PATH="@DSH_LIBDIR@${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"; export LD_LIBRARY_PATH
+  exec "@DSH_BASH@" "$0" "$@"
+fi
+# [dsh-android] scr: screen see & control via the accessibility service.
+#   see:    dump | dump-click | dump-full | xml | shot | pkg
+#   act:    tap <x> <y> | tap-text <t> | tap-desc <d>
+#           swipe <x1> <y1> <x2> <y2> [ms] | long-press <x> <y> [ms]
+#           key <back|home|recents|notifications|quick_settings>
+#   type:   input <text> [--target <hint>] [--append]     (v1.2.54)
+#   search: find <text> [--tap] [--back] [--max N]        (v1.2.54)
+#           find-center <text> [--tap] [--max N]          (v1.2.82, 滚到居中)
+#   diff:   diff [--reset]                                (v1.2.82, 只回变化节点)
+#   sync:   idle [ms] | wait <t> [gone] [ms]              (idle = v1.2.54)
+#   batch:  batch <json-file|->                           (v1.2.54, 多步一次执行)
+#   watch:  interference [since-ms]                       (v1.2.54, 人是否接管)
+DIR=$(cd "$(dirname "$0")" && pwd)
+. "$DIR/_dsh_http.sh"
+
+case "$1" in
+  dump)
+    # 默认紧凑格式（压缩 6.8 倍，v1.2.55）；需要 cls/rid/精确尺寸时用 `scr dump-full`
+    dsh_http GET /screen || exit 2
+    ;;
+  dump-full)
+    # 完整 JSON（每节点 11 字段，200 节点 ≈ 1.5 万 tokens —— 会明显拖慢每轮推理）
+    dsh_http GET "/screen?format=json" || exit 2
+    ;;
+  dump-click)
+    # 紧凑 + 只列可点击/可编辑节点（多数自动化场景够用，进一步省 token）
+    dsh_http GET "/screen?filter=clickable" || exit 2
+    ;;
+  xml)
+    dsh_http GET "/screen?xml=1" || exit 2
+    ;;
+  shot)
+    # shot [--max N] [--save]
+    #   --max N  最长边缩到 N 像素（省体积）
+    #   --save   保存到文件只回路径（v1.2.138，**强烈推荐**）——base64 极吃
+    #            上下文，用 --save + read_image 按需读图；旧图自动清理（留最近12张）
+    case "$2" in
+      --save) dsh_http GET "/screenshot?save=1${3:+&max=${3#--max }}" || exit 2 ;;
+      --max)  dsh_http GET "/screenshot?max=$3" || exit 2 ;;
+      *)      dsh_http GET /screenshot || exit 2 ;;
+    esac
+    ;;
+  tap-id)
+    # v1.2.141：按 resource-id 点击——比文本定位稳（不受界面语言/OCR 误差/同文本重复影响）。
+    # 参数是 rid 的后缀即可（完整 rid 很长，如 "action_bar_search"）。
+    [ -n "$2" ] || { echo "usage: scr tap-id <resource-id-suffix>" >&2; exit 64; }
+    dsh_http POST /tap-id "{\"id\":\"$(_dsh_json_escape "$2")\"}" || exit 2 ;;
+  wait-text)
+    # v1.2.141：等文本出现（默认）或消失（--gone）——比轮询 + 自己判更快，单次调用
+    shift
+    T="$1"; shift
+    GONE=false; TIMEOUT=8000
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --gone) GONE=true; shift ;;
+        --timeout) TIMEOUT="$2"; shift 2 ;;
+        *) shift ;;
+      esac
+    done
+    [ -n "$T" ] || { echo "usage: scr wait-text <text> [--gone] [--timeout ms]" >&2; exit 64; }
+    dsh_http POST /wait-text "{\"text\":\"$(_dsh_json_escape "$T")\",\"gone\":$GONE,\"timeoutMs\":$TIMEOUT}" || exit 2 ;;
+  scroll-top)    dsh_http POST /scroll-edge '{"direction":"top"}' || exit 2 ;;
+  scroll-bottom) dsh_http POST /scroll-edge '{"direction":"bottom"}' || exit 2 ;;
+  notif)
+    # v1.2.141：最近的通知（无障碍通知事件缓存）——验证"是否弹了通知"/读通知内容
+    dsh_http GET /notif || exit 2 ;;
+  pkg)
+    # 前台应用包名：确认"是否还在目标界面"（timeoutMs 取最小，只读一次）
+    dsh_http POST /idle '{"timeoutMs":200}' || exit 2
+    ;;
+  tap)
+    [ -n "$2" ] && [ -n "$3" ] || { echo "usage: scr tap <x> <y>" >&2; exit 64; }
+    dsh_http POST /tap "{\"x\":$2,\"y\":$3}" && echo tapped || { echo "tap failed" >&2; exit 1; }
+    ;;
+  tap-text)
+    [ -n "$2" ] || { echo "usage: scr tap-text <text>" >&2; exit 64; }
+    dsh_http POST /tap "{\"text\":\"$(_dsh_json_escape "$2")\"}" && echo tapped || { echo "text not found" >&2; exit 1; }
+    ;;
+  tap-desc)
+    [ -n "$2" ] || { echo "usage: scr tap-desc <desc>" >&2; exit 64; }
+    dsh_http POST /tap "{\"desc\":\"$(_dsh_json_escape "$2")\"}" && echo tapped || { echo "desc not found" >&2; exit 1; }
+    ;;
+  swipe)
+    [ -n "$5" ] || { echo "usage: scr swipe <x1> <y1> <x2> <y2> [ms]" >&2; exit 64; }
+    ms="${6:-300}"
+    dsh_http POST /gesture "{\"type\":\"swipe\",\"x1\":$2,\"y1\":$3,\"x2\":$4,\"y2\":$5,\"durationMs\":$ms}" \
+      && echo swiped || { echo "swipe failed" >&2; exit 3; }
+    ;;
+  long-press)
+    [ -n "$2" ] && [ -n "$3" ] || { echo "usage: scr long-press <x> <y> [ms]" >&2; exit 64; }
+    ms="${4:-600}"
+    dsh_http POST /gesture "{\"type\":\"long_press\",\"x\":$2,\"y\":$3,\"durationMs\":$ms}" \
+      && echo pressed || { echo "long-press failed" >&2; exit 3; }
+    ;;
+  key)
+    [ -n "$2" ] || { echo "usage: scr key <back|home|recents|notifications|quick_settings>" >&2; exit 64; }
+    dsh_http POST /key "{\"action\":\"$2\"}" && echo done || { echo "unknown action" >&2; exit 1; }
+    ;;
+  input)
+    # input <text> [--target <hint>] [--append]
+    [ -n "$2" ] || { echo "usage: scr input <text> [--target <hint>] [--append]" >&2; exit 64; }
+    txt="$2"; tgt=""; app="false"; shift 2
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --target) tgt="$2"; shift 2 ;;
+        --append) app="true"; shift ;;
+        *) shift ;;
+      esac
+    done
+    body="{\"text\":\"$(_dsh_json_escape "$txt")\",\"append\":$app"
+    [ -n "$tgt" ] && body="$body,\"target\":\"$(_dsh_json_escape "$tgt")\""
+    body="$body}"
+    dsh_http POST /input "$body" && echo typed || { echo "input failed (tap the field first, or use --target)" >&2; exit 1; }
+    ;;
+  find)
+    # find <text> [--tap] [--back] [--max N]
+    [ -n "$2" ] || { echo "usage: scr find <text> [--tap] [--back] [--max N]" >&2; exit 64; }
+    q="$2"; wtap="false"; back="false"; mx="8"; shift 2
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --tap) wtap="true"; shift ;;
+        --back) back="true"; shift ;;
+        --max) mx="$2"; shift 2 ;;
+        *) shift ;;
+      esac
+    done
+    dsh_http POST /scroll-find "{\"text\":\"$(_dsh_json_escape "$q")\",\"tap\":$wtap,\"back\":$back,\"maxSwipes\":$mx}" \
+      || { echo "find failed" >&2; exit 1; }
+    ;;
+  idle)
+    ms="${2:-3000}"
+    dsh_http POST /idle "{\"timeoutMs\":$ms}" || exit 2
+    ;;
+  pick)
+    # v1.2.120：本地快速决策 —— 给定目标描述，本地立刻判断该点哪个节点
+    # 用法: scr pick <目标描述> [--tap] [--all]
+    #   --tap  选中后直接点击（一次调用完成「判断+执行」）
+    #   --all  不优先可点击节点（默认把 clickable 排前面 —— 注意这是**排序**
+    #          不是过滤：文本节点才是点击目标，过滤掉会让 pick 永远选不中）
+    # 返回 via=exact（文本匹配，零延迟）/ semantic（本地嵌入，毫秒级）/ none（交云端）
+    shift
+    # v1.2.152 审查修复：--all 此前被解析成 false 且从未进入请求体——AI 传 --all
+    # 想"不限制可点击节点"，实际仍只搜 clickable 池，收到"屏幕上没这个文本"的
+    # 错误结论。现在 --all 真的放开过滤（clickableOnly=false）。
+    P_TAP=false; P_CLICKABLE=true; P_TARGET=""
+    for a in "$@"; do
+      case "$a" in
+        --tap) P_TAP=true ;;
+        --all) P_CLICKABLE=false ;;
+        *) [ -z "$P_TARGET" ] && P_TARGET="$a" ;;
+      esac
+    done
+    dsh_http POST /pick "{\"target\":\"$P_TARGET\",\"tap\":$P_TAP,\"clickableOnly\":$P_CLICKABLE}" || exit 2
+    ;;
+
+  changed)
+    # v1.2.113：事件驱动变化摘要（毫秒级，不 dump 整树）
+    # 返回「自上次调用以来屏幕发生了什么」：窗口切换 + 文本出现/更新
+    dsh_http GET /screen-changed || exit 2
+    ;;
+
+  macro)
+    # v1.2.113：本地动作库 —— 常见操作模板，零模型推理、毫秒执行。
+    # 确定性操作（返回/主页/最近任务/通知栏/快捷设置/打开设置/短暂等待）
+    # 不需要 AI 思考，一条命令直达；与 batch 配合进一步减少往返。
+    # v1.2.137：新增**设置页直达**（wifi/display/sound/about/...）——省 3-5 步/页面。
+    case "$2" in
+      back|home|recents|notifications|quick_settings)
+        dsh_http POST /key "{\"action\":\"$2\"}" || exit 2 ;;
+      open-settings)
+        dsh_http POST /launch '{"package":"com.android.settings"}' || exit 2 ;;
+      wifi|bluetooth|display|sound|battery|apps|location|security|about|storage|network|date|accessibility|apps-default)
+        case "$2" in
+          wifi) ACT=WIFI_SETTINGS ;;
+          bluetooth) ACT=BLUETOOTH_SETTINGS ;;
+          display) ACT=DISPLAY_SETTINGS ;;
+          sound) ACT=SOUND_SETTINGS ;;
+          battery) ACT=BATTERY_SAVER_SETTINGS ;;
+          apps) ACT=APPLICATION_SETTINGS ;;
+          location) ACT=LOCATION_SOURCE_SETTINGS ;;
+          security) ACT=SECURITY_SETTINGS ;;
+          about) ACT=DEVICE_INFO_SETTINGS ;;
+          storage) ACT=INTERNAL_STORAGE_SETTINGS ;;
+          network) ACT=NETWORK_OPERATOR_SETTINGS ;;
+          date) ACT=DATE_SETTINGS ;;
+          accessibility) ACT=ACCESSIBILITY_SETTINGS ;;
+          apps-default) ACT=MANAGE_DEFAULT_APPS_SETTINGS ;;
+        esac
+        dsh_http POST /launch-intent "{\"action\":\"android.settings.$ACT\"}" || exit 2 ;;
+      app-info|app-notify|app-perms)
+        # v1.2.138：应用级设置直达（$3 = 包名）。app-info=应用信息页、
+        # app-notify=通知设置、app-perms=权限管理——省 AI 3-4 步/次。
+        PKG="$3"
+        [ -n "$PKG" ] || { echo "usage: scr macro $2 <package>" >&2; exit 64; }
+        case "$2" in
+          app-info)   ACT=APPLICATION_DETAILS_SETTINGS ;;
+          app-notify) ACT=APP_NOTIFICATION_SETTINGS ;;
+          app-perms)  ACT=APPLICATION_DETAILS_SETTINGS ;;
+        esac
+        dsh_http POST /launch-intent "{\"action\":\"android.settings.$ACT\",\"data\":\"package:$PKG\"}" || exit 2 ;;
+      sleep)
+        dsh_http POST /idle '{"timeoutMs":1200}' || exit 2 ;;
+      *)
+        echo "usage: scr macro <back|home|recents|notifications|quick_settings|open-settings|sleep>" >&2
+        echo "       scr macro <wifi|bluetooth|display|sound|battery|apps|location|security|about|storage|network|date|accessibility|apps-default>" >&2
+        echo "       scr macro <app-info|app-notify|app-perms> <package>" >&2
+        exit 2 ;;
+    esac
+    ;;
+
+  framediff)
+    # v1.2.122: frame diff - local <5ms "did the screen change" (dynamic visual scenes).
+    # The event stream cannot cover Canvas games/video/animations: no node tree, no events.
+    dsh_http GET /frame-diff || exit 2
+    ;;
+
+  framewait)
+    # v1.2.122: wait for the picture to change (replaces fixed sleep)
+    shift; dsh_http POST /frame-wait "${1:-{\"timeoutMs\":5000,\"intervalMs\":250}}" || exit 2
+    ;;
+
+  diff)
+    # 界面差分：只回变化的节点（判断"点完到底有没有反应"，省一次全量 dump）
+    if [ "$2" = "--reset" ]; then
+      dsh_http GET "/diff?reset=1" || exit 2
+    else
+      dsh_http GET /diff || exit 2
+    fi
+    ;;
+  find-center)
+    # 滚到目标并**居中**（避免点完在屏幕边缘，长按/拖拽打偏）
+    q="$2"; shift 2 2>/dev/null || shift 1
+    tap=false; max=8
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --tap) tap=true; shift ;;
+        --max) max="$2"; shift 2 ;;
+        *) shift ;;
+      esac
+    done
+    dsh_http POST /scroll-center "{\"text\":\"$q\",\"tap\":$tap,\"maxSwipes\":$max}" || exit 2
+    ;;
+  batch)
+    # batch <json-file|-> ：一次执行一串动作（v1.2.54）—— 治"慢"的关键
+    # 从文件或 stdin 读 JSON（动作序列太复杂，不适合放命令行参数）：
+    #   scr batch steps.json
+    #   echo '{"steps":[{"type":"tap","text":"WLAN"},{"type":"idle"}]}' | scr batch -
+    [ -n "$2" ] || { echo "usage: scr batch <json-file|->" >&2; exit 64; }
+    if [ "$2" = "-" ]; then
+      body=$(cat)
+    else
+      [ -f "$2" ] || { echo "file not found: $2" >&2; exit 66; }
+      body=$(cat "$2")
+    fi
+    [ -n "$body" ] || { echo "empty batch body" >&2; exit 65; }
+    dsh_http POST /batch "$body" || exit 2
+    ;;
+  interference)
+    # interference [since-ms] ：查外部干预（人是否突然接管）
+    if [ -n "$2" ]; then
+      dsh_http GET "/interference?since=$2" || exit 2
+    else
+      dsh_http GET /interference || exit 2
+    fi
+    ;;
+  status)
+    # status <文本> [--action <动作>] ：更新悬浮窗状态（v1.2.57）
+    # 让用户随时看到 AI 在做什么；不带参数则只读当前可用性
+    if [ -z "$2" ]; then
+      dsh_http POST /overlay '{}' || exit 2
+      exit 0
+    fi
+    st="$2"; act=""; shift 2
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --action) act="$2"; shift 2 ;;
+        *) shift ;;
+      esac
+    done
+    body="{\"status\":\"$(_dsh_json_escape "$st")\""
+    [ -n "$act" ] && body="$body,\"action\":\"$(_dsh_json_escape "$act")\""
+    body="$body}"
+    dsh_http POST /overlay "$body" || exit 2
+    ;;
+  status-hide)
+    dsh_http POST /overlay '{"hide":true}' || exit 2
+    ;;
+  wait)
+    [ -n "$2" ] || { echo "usage: scr wait <text> [gone] [ms]" >&2; exit 64; }
+    gone=false; [ "$3" = "gone" ] && gone=true
+    ms="${4:-5000}"
+    dsh_http POST /wait "{\"text\":\"$(_dsh_json_escape "$2")\",\"gone\":$gone,\"timeoutMs\":$ms}" \
+      && echo "condition met" || { echo "timeout" >&2; exit 1; }
+    ;;
+  launch)
+    [ -n "$2" ] || { echo "usage: scr launch <package|label>" >&2; exit 64; }
+    case "$2" in
+      *.*) body="{\"package\":\"$(_dsh_json_escape "$2")\"}" ;;
+      *)   body="{\"label\":\"$(_dsh_json_escape "$2")\"}" ;;
+    esac
+    dsh_http POST /launch "$body" || exit 2
+    ;;
+  *)
+    cat >&2 <<'USAGE'
+usage: scr <command>
+  see:    dump | dump-click | dump-full | xml | shot | pkg
+          (dump = compact text, ~6.8x smaller than dump-full)
+  act:    tap <x> <y> | tap-text <t> | tap-desc <d>
+          swipe <x1> <y1> <x2> <y2> [ms] | long-press <x> <y> [ms]
+          key <back|home|recents|notifications|quick_settings>
+  type:   input <text> [--target <hint>] [--append]
+  search: find <text> [--tap] [--back] [--max N]
+  sync:   idle [ms] | wait <t> [gone] [ms]
+  batch:  batch <json-file|->      (multi-step, one round trip)
+  watch:  interference [since-ms]  (did the user take over?)
+  ui:     status [text] [--action <a>] | status-hide
+USAGE
+    exit 64
+    ;;
+esac

@@ -1,0 +1,415 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- WebView 全屏垫底：半透明工具栏悬浮其上（网页内容透出，浏览器质感）。
+         v1.5.8：外面多包一层 webHost —— Chromium 的 WebView 会忽略自身的 padding，
+         直接给 WebView 加内边距并不能缩小它的 CSS 视口（结果就是键盘弹起时底部输入框
+         仍被盖住）。改由父容器吃内边距，WebView 真正的布局尺寸随之缩小，视口才会变。 -->
+    <FrameLayout
+        android:id="@+id/webHost"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <WebView
+            android:id="@+id/webView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
+
+    <!-- 安装/启动进度条：Installing 显示真实解压百分比，Starting 转不确定动画 -->
+    <ProgressBar
+        android:id="@+id/installProgress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="3dp"
+        android:maxHeight="3dp"
+        android:layout_gravity="top"
+        android:layout_marginTop="40dp"
+        android:indeterminate="true"
+        android:progressTint="@color/accent"
+        android:progressBackgroundTint="@color/stroke"
+        android:elevation="4dp"
+        android:visibility="gone" />
+
+    <!-- 灵动岛（收起态）：纯黑悬浮胶囊，可拖到屏幕边缘任意位置，点它展开工具栏。
+         内部只留一根短横条作为「可点开」的提示；早期版本还画了一个模拟摄像头开孔的
+         小圆点，展开后这个点缀会横向占位、压住状态文字，故去掉。 -->
+    <LinearLayout
+        android:id="@+id/handleBar"
+        android:layout_width="64dp"
+        android:layout_height="26dp"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="2dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="@drawable/bg_dynamic_island"
+        android:elevation="10dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone">
+        <View
+            android:layout_width="28dp"
+            android:layout_height="3dp"
+            android:background="@color/island_handle" />
+    </LinearLayout>
+
+    <!-- 灵动岛（展开态）：工具栏收进悬浮黑岛；宽度撑满留边距，竖屏也不裁切按钮 -->
+    <LinearLayout
+        android:id="@+id/statusBarRow"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginTop="2dp"
+        android:orientation="horizontal"
+        android:background="@drawable/bg_dynamic_island"
+        android:elevation="10dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/statusBar"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:paddingStart="18dp"
+            android:paddingEnd="6dp"
+            android:textColor="@color/island_text"
+            android:textSize="13sp"
+            android:gravity="center_vertical"
+            android:singleLine="true"
+            android:ellipsize="end" />
+
+        <!-- 预览模式返回：仅当 WebView 位于非引擎端口的回环页面时显示 -->
+        <ImageView
+            android:id="@+id/btnBack"
+            android:layout_width="38dp"
+            android:layout_height="match_parent"
+            android:padding="10dp"
+            android:src="@drawable/ic_back"
+            android:tint="@color/island_success"
+            android:visibility="gone"
+            android:contentDescription="@string/btn_back"
+            android:background="?android:attr/selectableItemBackground" />
+
+        <!-- 重启引擎 -->
+        <ImageView
+            android:id="@+id/btnRestart"
+            android:layout_width="38dp"
+            android:layout_height="match_parent"
+            android:padding="10dp"
+            android:src="@drawable/ic_restart"
+            android:tint="@color/island_accent"
+            android:contentDescription="@string/btn_restart"
+            android:background="?android:attr/selectableItemBackground" />
+
+        <!-- 日志查看器：engine.log / boot.log 尾部（排查引擎重启等问题） -->
+        <ImageView
+            android:id="@+id/btnLog"
+            android:layout_width="38dp"
+            android:layout_height="match_parent"
+            android:padding="10dp"
+            android:src="@drawable/ic_log"
+            android:tint="@color/island_muted"
+            android:contentDescription="@string/btn_log"
+            android:background="?android:attr/selectableItemBackground" />
+
+        <!-- 原生终端入口：跳转独立终端页（真 PTY，自带 bash） -->
+        <ImageView
+            android:id="@+id/btnTerminal"
+            android:layout_width="38dp"
+            android:layout_height="match_parent"
+            android:padding="10dp"
+            android:src="@drawable/ic_terminal"
+            android:tint="@color/island_accent"
+            android:contentDescription="@string/btn_terminal"
+            android:background="?android:attr/selectableItemBackground" />
+
+        <!-- 刷新网页（v1.5.5：原「隐藏工具栏」按钮替换为浏览器刷新） -->
+        <ImageView
+            android:id="@+id/btnReload"
+            android:layout_width="38dp"
+            android:layout_height="match_parent"
+            android:padding="10dp"
+            android:src="@drawable/ic_refresh"
+            android:tint="@color/island_text"
+            android:contentDescription="@string/btn_reload"
+            android:background="?android:attr/selectableItemBackground" />
+
+        <!-- 设置入口：齿轮图标（跳转独立设置页） -->
+        <ImageView
+            android:id="@+id/btnMore"
+            android:layout_width="44dp"
+            android:layout_height="match_parent"
+            android:padding="10dp"
+            android:layout_marginEnd="2dp"
+            android:src="@drawable/ic_settings"
+            android:tint="@color/island_text"
+            android:background="?android:attr/selectableItemBackground"
+            android:contentDescription="@string/settings_title" />
+    </LinearLayout>
+
+    <!-- ==================== 启动动画（v1.3.1） ====================
+         冷启动时运行时解压 + 引擎启动需要时间，之前这段时间是一块空黑屏（用户反馈）。
+         这里用一层品牌遮罩盖住：logo 淡入 + 轻微呼吸、真实解压百分比、
+         状态文案随引擎阶段变化；WebView 首屏加载完成后淡出。
+         clickable/focusable：遮罩期间吞掉误触，避免用户点到下面还没就绪的界面。 -->
+    <LinearLayout
+        android:id="@+id/splash"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/splash_bg"
+        android:elevation="30dp"
+        android:clickable="true"
+        android:focusable="true">
+
+        <!-- v1.7.1：面板回到屏幕居中（v1.7.0 贴底在部分机型上视觉重心过低），
+             四段进度轨/大字阶段等控制台内容保持不变，卡片恢复全圆角。 -->
+        <ScrollView
+            android:id="@+id/splashCardScroll"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true"
+            android:scrollbars="none"
+            android:overScrollMode="never">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:paddingTop="24dp"
+                android:paddingBottom="24dp">
+
+                <LinearLayout
+                    android:id="@+id/splashCard"
+                    android:layout_width="340dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="start"
+                    android:paddingLeft="26dp"
+                    android:paddingRight="26dp"
+                    android:paddingTop="26dp"
+                    android:paddingBottom="26dp"
+                    android:background="@drawable/splash_card">
+
+                    <!-- 品牌行：小尺寸 logo + 字标 + 右侧旋转虚线圈 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <FrameLayout
+                            android:layout_width="76dp"
+                            android:layout_height="76dp">
+
+                            <View
+                                android:id="@+id/splashGlow"
+                                android:layout_width="76dp"
+                                android:layout_height="76dp"
+                                android:layout_gravity="center"
+                                android:background="@drawable/splash_glow" />
+
+                            <ProgressBar
+                                android:id="@+id/splashSpinner"
+                                style="?android:attr/progressBarStyleLarge"
+                                android:layout_width="66dp"
+                                android:layout_height="66dp"
+                                android:layout_gravity="center"
+                                android:alpha="0.35"
+                                android:indeterminateTint="@color/accent"
+                                android:indeterminateTintMode="src_in" />
+
+                            <ImageView
+                                android:id="@+id/splashLogo"
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:layout_gravity="center"
+                                android:padding="9dp"
+                                android:src="@mipmap/ic_launcher"
+                                android:background="@drawable/splash_logo_bg"
+                                android:elevation="6dp"
+                                android:contentDescription="@string/app_name" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="14dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/splashTitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/app_name"
+                                android:textColor="@color/text_primary"
+                                android:textSize="19sp"
+                                android:textStyle="bold"
+                                android:letterSpacing="0.05" />
+
+                            <TextView
+                                android:id="@+id/splashTagline"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="3dp"
+                                android:text="@string/splash_tagline"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <View
+                            android:id="@+id/splashRing"
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="@drawable/splash_ring" />
+                    </LinearLayout>
+
+                    <!-- 当前阶段：大字号，便于余光一瞥就知道在干什么 -->
+                    <TextView
+                        android:id="@+id/splashStatus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="36dp"
+                        android:text="@string/splash_preparing"
+                        android:textColor="@color/text_primary"
+                        android:textSize="25sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="-0.01"
+                        android:gravity="start"
+                        android:singleLine="true"
+                        android:ellipsize="end" />
+
+                    <TextView
+                        android:id="@+id/splashElapsed"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace"
+                        android:gravity="start"
+                        android:singleLine="true"
+                        android:ellipsize="end"
+                        tools:text="3.2s · 拉起引擎进程" />
+
+                    <!-- 四段进度轨：准备 → 运行环境 → 引擎 → 界面 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:id="@+id/splashPhase1"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="6dp"
+                            android:paddingLeft="11dp"
+                            android:paddingRight="11dp"
+                            android:paddingTop="5dp"
+                            android:paddingBottom="5dp"
+                            android:text="@string/splash_phase_prepare"
+                            android:textColor="@color/accent"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:background="@drawable/splash_pill" />
+
+                        <TextView
+                            android:id="@+id/splashPhase2"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="6dp"
+                            android:paddingLeft="11dp"
+                            android:paddingRight="11dp"
+                            android:paddingTop="5dp"
+                            android:paddingBottom="5dp"
+                            android:text="@string/splash_phase_runtime"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp"
+                            android:background="@drawable/splash_chip_dim" />
+
+                        <TextView
+                            android:id="@+id/splashPhase3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="6dp"
+                            android:paddingLeft="11dp"
+                            android:paddingRight="11dp"
+                            android:paddingTop="5dp"
+                            android:paddingBottom="5dp"
+                            android:text="@string/splash_phase_engine"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp"
+                            android:background="@drawable/splash_chip_dim" />
+
+                        <TextView
+                            android:id="@+id/splashPhase4"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingLeft="11dp"
+                            android:paddingRight="11dp"
+                            android:paddingTop="5dp"
+                            android:paddingBottom="5dp"
+                            android:text="@string/splash_phase_ui"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp"
+                            android:background="@drawable/splash_chip_dim" />
+                    </LinearLayout>
+
+                    <ProgressBar
+                        android:id="@+id/splashProgress"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="5dp"
+                        android:layout_marginTop="22dp"
+                        android:indeterminate="true"
+                        android:progressTint="@color/accent"
+                        android:progressBackgroundTint="@color/stroke"
+                        android:background="@drawable/splash_track" />
+
+                    <TextView
+                        android:id="@+id/splashDetail"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:minHeight="30dp"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace"
+                        android:gravity="start"
+                        android:maxLines="2"
+                        android:ellipsize="end"
+                        tools:text="48,203 / 50,405 files" />
+
+                    <!-- 运行时缺失时直接在此导入本地 runtime.zip -->
+                    <TextView
+                        android:id="@+id/splashImportRuntime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:paddingLeft="14dp"
+                        android:paddingRight="14dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"
+                        android:text="@string/splash_import_runtime"
+                        android:textColor="@color/accent"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:visibility="gone"
+                        android:background="@drawable/splash_pill" />
+                </LinearLayout>
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+</FrameLayout>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 分组卡片（v1.9.0）：16dp 圆角 + 1dp 描边，配合 layout 里的 elevation 1dp 形成层次 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/surface" />
+    <stroke
+        android:width="1dp"
+        android:color="@color/stroke" />
+    <corners android:radius="16dp" />
+</shape>
