@@ -39,4 +39,8 @@
     <color name="island_muted">#FF9AA5B4</color>
     <color name="island_handle">#FF3A3A3C</color>
     <color name="sticky_bg">#F2101418</color>
+    <color name="glass_top">#0FFFFFFF</color>
+    <color name="glass_bottom">#05FFFFFF</color>
+    <color name="glass_stroke">#26FFFFFF</color>
+    <color name="glass_highlight">#14FFFFFF</color>
 </resources>

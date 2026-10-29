@@ -1,12 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 行图标底座（v1.9.0）：40dp 圆角方块，自上而下 surface_high → surface_alt 微渐变 + 1dp 描边 -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <gradient
-        android:angle="90"
-        android:endColor="@color/surface_alt"
-        android:startColor="@color/surface_high" />
-    <stroke
-        android:width="1dp"
-        android:color="@color/divider" />
-    <corners android:radius="14dp" />
-</shape>
+<!-- 毛玻璃行图标底座（v1.9.1）：半透明玻璃面 + 白色内描边，明/暗主题自动取色 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="90"
+                android:endColor="@color/glass_bottom"
+                android:startColor="@color/glass_top" />
+            <stroke
+                android:width="1dp"
+                android:color="@color/glass_stroke" />
+            <corners android:radius="14dp" />
+        </shape>
+    </item>
+    <!-- 顶部高光，模拟玻璃反光 -->
+    <item android:height="18dp" android:gravity="top">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="90"
+                android:endColor="@android:color/transparent"
+                android:startColor="@color/glass_highlight" />
+            <corners android:topLeftRadius="14dp" android:topRightRadius="14dp" />
+        </shape>
+    </item>
+</layer-list>
