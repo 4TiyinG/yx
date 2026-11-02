@@ -1,0 +1,89 @@
+*.iml
+.gradle*/
+.scratch/
+.workbuddy/
+local.properties
+.idea/
+build/
+app/build/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+# 运行时快照不入库（CI 构建时注入）
+app/src/main/assets/runtime.zip
+# ABI 戳是构建产物：入库会让 CI 的 prepareRuntime 命中 skip 分支，
+# 绕过 PTC 补丁校验与去重（审查 P1，v1.4.16）
+app/src/main/assets/runtime/.abi
+# 签名密钥绝不入库
+keystore/
+*.keystore
+*.jks
+# 扩展闭包审计缓存（scripts/audit-extension-closures.py）
+_debcheck/
+
+# 工具产生的会话/钩子状态（非项目内容）
+.mimosa/
+# WorkBuddy 的工作记忆（设备/构建踩坑记录，同 .mimosa/ 性质，不入库）
+.workbuddy/
+
+# Python 字节码缓存
+__pycache__/
+*.pyc
+
+# patch-curl-wrapper.py / dedupe-runtime.py 的自动备份（体积大，不入库）
+app/src/main/assets/*.bak
+app/src/main/assets/*.tmp
+
+# 本地 runtime 快照备份（126MB × N，不入库；assets 里的备份会被打进 APK）
+_runtime_bak/
+
+# 本地临时测试产物（真机会话样本等）
+_*.zstd
+_*.png
+_probe_*
+scripts/probes/testsite/*.apk
+scene_memory.json
+dist/
+_release_*.py
+node_modules/
+
+# dev probe artifacts
+scripts/probes/_parts/
+scripts/probes/*.bin
+
+# 根目录调试草稿（UI dump / 临时截图，v1.4.x 清理）
+/_*.xml
+/_*.png
+/_*.mjs
+/_*.sh
+/_*.json
+/social-preview.png
+/dsh-mobile-social.png
+
+# 性能分析临时产物
+/_cmp/
+/_fstest*/
+
+# 本地探针脚本（只保留已跟踪的正式测试）
+/scripts/probes/*
+!/scripts/probes/_test_narrow_sidebar.mjs
+!/scripts/probes/_test_narrow_rightbar.mjs
+!/scripts/probes/_test_narrow_settings.mjs
+!/scripts/probes/_test_narrow_perf.mjs
+!/scripts/probes/_test_narrow_jsdom.mjs
+!/scripts/probes/_bench_narrow_before_after.mjs
+!/scripts/probes/attachment-read-probe.mjs
+!/scripts/probes/test_embed.mjs
+!/scripts/probes/test_pick.py
+!/scripts/probes/_test_responsive_native_ui.py
+!/scripts/probes/_test_plugin_render_paging.py
+!/scripts/probes/_test_runtime_dedupe.py
+!/scripts/probes/_test_root_pnpm_locks.py
+!/scripts/probes/_test_plugin_engine_compat.py
+!/scripts/probes/_test_webview_polyfill_v4.py
+!/scripts/probes/_test_webview_polyfill_v4.mjs
+!/scripts/probes/zstd-tail.js
+tasks/
+_bench/
