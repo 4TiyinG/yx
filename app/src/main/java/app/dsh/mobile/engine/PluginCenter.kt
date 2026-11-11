@@ -941,7 +941,7 @@ object PluginCenter {
      *
      * ## 真机取证（v1.4.65，宝宝第 3 次反馈「报错一点没变」）
      *
-     * 设备上 `/data/data/app.dsh.mobile/files/dsh-home/profiles/web/pnpm-workspace.yaml`
+     * 设备上 `/data/data/app.deepseek.harness/files/dsh-home/profiles/web/pnpm-workspace.yaml`
      * 长这样（v1.4.59 那轮往 workspace 写 onlyBuiltDependencies 留下的）：
      *
      * ```yaml
@@ -1409,7 +1409,7 @@ object PluginCenter {
     // v1.6.18（2026-11-07，真机报错）
     //
     //     Error: EACCES: permission denied, open
-    //       '/data/user/0/app.dsh.mobile/files/dsh-home/profiles/web/package.json.lock'
+    //       '/data/user/0/app.deepseek.harness/files/dsh-home/profiles/web/package.json.lock'
     //       at async withFileLock (…/@deepseek-ai/dsh-atomic-write/lib/index.js:197:4)
     //
     // ## 为什么这条和已有的两套自愈都搭不上

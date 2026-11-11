@@ -19,7 +19,7 @@ import app.dsh.mobile.engine.LinuxSshServer
  * 三四步摩擦，很多人会卡在中间。密码只要在手机上敲两遍，VS Code 那边填一次就行。
  *
  * 想用密钥的用户仍然可以：把公钥放进
- * `/data/data/app.dsh.mobile/files/ssh/authorized_keys`（每行一个 OpenSSH 公钥），
+ * `/data/data/app.deepseek.harness/files/ssh/authorized_keys`（每行一个 OpenSSH 公钥），
  * `LinuxSshServer.authorizedKeysMatch` 会逐行比对。这条路没做 UI —— 做的人不需要
  * UI，需要 UI 的人不会做。
  *

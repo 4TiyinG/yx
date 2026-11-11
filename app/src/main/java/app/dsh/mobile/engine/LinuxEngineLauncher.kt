@@ -694,7 +694,7 @@ class LinuxEngineLauncher(private val ctx: Context) {
 
             // 宿主侧「根」按同名挂载。只枚举具体目录治不完：workspace.json 里
             // 存的是任意宿主绝对路径（本次实测就有 /storage/emulated/0、
-            // /storage/emulated/0/Download/123云盘、/data/user/0/app.dsh.mobile/files
+            // /storage/emulated/0/Download/123云盘、/data/user/0/app.deepseek.harness/files
             // 三种），而容器的 /storage 与 /data 是 rootfs 里的空骨架 ——
             // 表现为目录「存在但列出 0 项」，新建/打开都失败（不是 ENOENT 而是
             // 空目录，比报错更难定位）。
@@ -712,7 +712,7 @@ class LinuxEngineLauncher(private val ctx: Context) {
             // 两个宿主根：外置存储与私有数据目录
             //
             // ★必须挂「真正的根」，不能只挂叶子（v1.6.14 修复）。
-            //   之前挂的是 /data/user/0/app.dsh.mobile/files，于是容器内
+            //   之前挂的是 /data/user/0/app.deepseek.harness/files，于是容器内
             //   /data/user 这级**不存在** —— 插件对 /data/user 做 lstat 直接
             //   ENOENT，hardssh 三个子插件全部 import 失败，
             //   plugin health 判 degraded（真机实测）。

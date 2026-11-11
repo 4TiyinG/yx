@@ -2239,7 +2239,7 @@ object EngineConfig {
         //   → runner.shell() 这条路容器里根本没有 /data/data → 写失败
         //   实测（模拟器 dsh34）：captureCompositor() 报 WLSHOT_NOSTART，
         //   /tmp/wlshot.log 里是
-        //     FAIL open /data/data/app.dsh.mobile/files/dshframe.bin: No such file
+        //     FAIL open /data/data/app.deepseek.harness/files/dshframe.bin: No such file
         //   而产线注释还写着「该目录已由 buildBinds 映射进容器」—— 那句对
         //   shell() 这条路从来不成立。
         //

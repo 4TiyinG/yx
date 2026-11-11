@@ -236,7 +236,10 @@ android {
     ndkVersion = "26.1.10909125"
 
     defaultConfig {
-        applicationId = "app.dsh.mobile"
+        // ⚠️ applicationId 决定安装身份；namespace / Kotlin 包名仍是 app.dsh.mobile，
+        // 两者故意解耦 —— 改安装包名不需要重排 239 个源码目录。
+        // 运行期硬编码的 /data/user/0/<applicationId> 路径已同步改为新包名。
+        applicationId = "app.deepseek.harness"
         minSdk = 26
         // 关键决策：targetSdk 28 —— sideload 分发，豁免 Android 10+ 的 W^X 限制，
         // 允许从 filesDir 直接 execve bionic 二进制（Termux 同款策略）。
