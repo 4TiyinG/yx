@@ -16,3 +16,8 @@ debug-signing/
 _runtime_bak/
 local-overrides/
 .cxx/
+
+# ── 保留在磁盘但不入库的辅助资源 ──────────────────
+scripts/
+vendor/
+docs/
