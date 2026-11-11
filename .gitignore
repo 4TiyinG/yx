@@ -1,0 +1,18 @@
+# ── 构建产物（不入库）─────────────────────────────
+build/
+app/build/
+app/.cxx/
+.gradle/
+*.apk
+*.aab
+*.zip
+
+# ── 本机配置（路径/签名，换机器即失效）─────────────
+local.properties
+keystore/
+debug-signing/
+
+# ── 运行时/缓存 ────────────────────────────────
+_runtime_bak/
+local-overrides/
+.cxx/

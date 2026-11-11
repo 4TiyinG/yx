@@ -1,0 +1,301 @@
+#!/system/bin/sh
+# [dsh-android] 自举到引擎 bash（/dev/tcp 是 bash 特性，toybox sh 不支持）。
+if [ -z "$_DSH_REEXEC" ]; then
+  _DSH_REEXEC=1; export _DSH_REEXEC
+  LD_LIBRARY_PATH="@DSH_LIBDIR@${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"; export LD_LIBRARY_PATH
+  exec "@DSH_BASH@" "$0" "$@"
+fi
+# [dsh-android] dev —— 设备能力统一入口（v1.5.0-beta.11：改为自描述）
+#
+# 为什么改成自描述：2026-11-02 用户说「直接做通用入口，有通用入口之后啥都能执行」。
+#
+# 旧实现（beta.10）把 25 个能力的名字与说明**硬编码在这个脚本里**，于是新增端点
+# 要改三处（Kotlin 路由 / 本脚本 LIST / 提示词），漏一处能力就对 AI 不存在。
+#
+# 现在本脚本只是**渲染器**：名字、说明、参数、示例、限制全部从 `GET /dev/help` 拉，
+# 数据源是 `EndpointCatalog.kt`。新增端点只要在那边登记一次，这里立刻能看到。
+#
+#   dev                             总目录（按组列出全部能力，带开关状态）
+#   dev <能力>                      该能力的完整用法（参数/示例/限制）
+#   dev <能力> k=v ...              执行（k=v 自动拼成 JSON 或 query）
+#   dev api <METHOD> <PATH> [BODY]  直接调任意端点（通用出口，不用等新脚本）
+#   dev raw                         真实路由表拍平清单（查漏用）
+#   dev help                        本段说明
+#
+# 例：
+#   dev                             看有什么
+#   dev nfc                         看 NFC 怎么用
+#   dev api GET /dev/status         直调（等价 dev status）
+#   dev api POST /dev/bt '{"op":"scan","ms":5000}'
+DIR=$(cd "$(dirname "$0")" && pwd)
+. "$DIR/_dsh_http.sh"
+
+# node 路径探测（v1.6.14）：
+#   原生模式 node 与 bash 同在 $PREFIX/bin，所以「bash 的目录 + /node」一直够用。
+#   但容器（Linux 模式）里 bash 在 /bin，node 在 /usr/bin —— 拼出来是 /bin/node，
+#   不存在。直接改软链也绕不过：musl 下对 bionic 二进制做 -x 判定不可靠。
+#   所以按候选列表逐个试，谁先能用就用谁。
+_dsh_find_node() {
+  for c in "${DSH_NODE:-}" /usr/bin/node /usr/local/bin/node /bin/node "@DSH_BASH@"; do
+    [ -n "$c" ] || continue
+    case "$c" in
+      */node) [ -x "$c" ] && { echo "$c"; return 0; } ;;
+      *)      [ -x "$c/node" ] && { echo "$c/node"; return 0; } ;;
+    esac
+  done
+  # 最后交给 PATH
+  command -v node 2>/dev/null && return 0
+  return 1
+}
+NODE="$(_dsh_find_node)"
+
+usage() {
+  cat <<'EOF'
+dev —— 设备能力统一入口
+
+用法：
+  dev                             列出全部能力（按组，带能力开关状态）
+  dev <能力>                      看完整用法（参数 / 示例 / 已知限制）
+  dev <能力> k=v ...              执行（k=v 自动拼成 JSON 或 query）
+  dev api <METHOD> <PATH> [BODY]  直接调任意桥端点
+  dev raw                         真实路由表清单 + 目录一致性核对
+  dev help                        本段说明
+
+关于 dev api：
+  它不是特权后门 —— 请求走同一条路由分发，各端点自己的能力开关、系统权限、
+  鉴权照样生效。它只是省去「等 App 为某个端点写门脚本」的等待。
+  适合：目录里还没登记的新端点、临时组合参数。
+
+例：
+  dev api GET /dev/status
+  dev api GET '/dev/sensors?type=accel'
+  dev api POST /dev/bt '{"op":"advertise","manufacturerId":76,"data":"0102030405"}'
+  dev api POST /dev/control '{"op":"torch","on":true}'
+EOF
+}
+
+need_node() {
+  if [ ! -x "$NODE" ]; then
+    echo "dev: 找不到 node（$NODE）—— 无法解析目录 JSON" >&2
+    echo "dev: 兜底：dev api GET /dev/help 看原始 JSON" >&2
+    return 66
+  fi
+}
+
+# a=b ... → {"a":"b",...}
+# 类型推断：true/false → 布尔；数字 → 数字；[ 或 { 开头 → 原样嵌入；其余 → 字符串
+kv_to_json() {
+  local json="{" first=1 kv k v
+  for kv in "$@"; do
+    case "$kv" in
+      *=*) ;;
+      *) continue ;;
+    esac
+    k="${kv%%=*}"; v="${kv#*=}"
+    [ $first -eq 1 ] || json="$json,"
+    first=0
+    case "$v" in
+      true|false)              json="$json\"$k\":$v" ;;
+      -[0-9]*|[0-9]*)          json="$json\"$k\":$v" ;;
+      \[*|\{*)                 json="$json\"$k\":$v" ;;
+      *)                       json="$json\"$k\":\"$v\"" ;;
+    esac
+  done
+  printf '%s}' "$json"
+}
+
+cmd_list() {
+  local out rc
+  out=$(dsh_http GET "/dev/help" "")
+  rc=$?
+  [ $rc -ne 0 ] && { echo "dev: 取端点目录失败（rc=$rc）" >&2; return $rc; }
+  need_node || return $?
+  printf '%s' "$out" | "$NODE" -e '
+    let s=""; process.stdin.on("data",d=>s+=d).on("end",()=>{
+      let j; try { j=JSON.parse(s) } catch(e){ console.error("dev: 目录 JSON 解析失败: "+e.message); process.exit(65) }
+      if(!j.ok){ console.error("dev: 服务端报错 "+(j.error||"")); process.exit(1) }
+      const W=14, pad=(t,n)=>t.length>=n?t+" ":t+" ".repeat(n-t.length);
+      let off=0, on=0;
+      for(const g of j.groups){
+        console.log("");
+        console.log(g.group+" —— "+g.desc);
+        for(const it of g.items){
+          let mark="  ";
+          if(it.cap!==undefined){ if(it.cap_enabled){mark="✓ ";on++}else{mark="· ";off++} }
+          console.log("  "+mark+pad(it.id,W)+it.summary);
+        }
+      }
+      console.log("");
+      console.log("共 "+j.count+" 个端点（✓=能力已开  ·=能力未开  无标记=无开关）");
+      if(off) console.log("有 "+off+" 个端点因能力开关未开而不可用 —— 到 App 权限中心打开对应开关");
+      console.log("");
+      console.log("dev <名字> 看用法 ｜ dev api <METHOD> <PATH> [BODY] 直接调 ｜ dev help");
+    });'
+}
+
+cmd_detail() {
+  local name="$1" out rc
+  out=$(dsh_http GET "/dev/help?q=$name" "")
+  rc=$?
+  [ $rc -ne 0 ] && return $rc
+  need_node || return $?
+  printf '%s' "$out" | "$NODE" -e '
+    let s=""; process.stdin.on("data",d=>s+=d).on("end",()=>{
+      let j; try { j=JSON.parse(s) } catch(e){ console.error("dev: JSON 解析失败: "+e.message); process.exit(65) }
+      if(!j.ok){
+        console.error("dev: 没有这个能力："+(j.query||""));
+        console.error("dev: 用 `dev` 看全部可用的名字");
+        process.exit(64);
+      }
+      // v1.6：精确没命中时服务端会按意图给出候选（ambiguous:true）。
+      // 直接把候选列出来让 AI 一次选对，别让它再猜一轮。
+      if(j.ambiguous && j.candidates){
+        console.log("没有叫「"+(j.query||"")+"」的能力，但按意思找到 "+j.candidates.length+" 个：");
+        console.log("");
+        const W=14, pad=(t,n)=>t.length>=n?t+" ":t+" ".repeat(n-t.length);
+        for(const c of j.candidates){
+          let mark="  ";
+          if(c.cap!==undefined) mark = c.cap_enabled ? "✓ " : "· ";
+          console.log("  "+mark+pad(c.id,W)+c.summary);
+        }
+        console.log("");
+        console.log("dev <上面的名字> 看完整用法");
+        process.exit(0);
+      }
+      console.log(j.id+" —— "+j.summary);
+      console.log("");
+      console.log("  请求    "+j.method+" "+j.path);
+      if(j.cap) console.log("  能力开关 cap."+j.cap+"  "+(j.cap_enabled?"已开 ✓":"未开 ✗ —— 到 App 权限中心打开"));
+      if(j.perm && j.perm.length) console.log("  系统权限 "+j.perm);
+      if(j.params && j.params.length){
+        console.log("");
+        console.log("  参数");
+        for(const line of String(j.params).split("\n")) console.log("    "+line);
+      }
+      if(j.body && j.body.length){
+        console.log("");
+        console.log("  请求体示例");
+        console.log("    "+j.body);
+      }
+      if(j.examples && j.examples.length){
+        console.log("");
+        console.log("  例");
+        for(const ex of j.examples) console.log("    "+ex);
+      }
+      if(j.limits && j.limits.length){
+        console.log("");
+        console.log("  ⚠ 已知限制");
+        for(const line of String(j.limits).split("\n")) console.log("    "+line);
+      }
+      console.log("");
+      // ⚠ 不能用字面单引号：整段 JS 被 shell 的单引号包着，里面再出现单引号会把引号截断
+      // （实测症状：输出变成 `dev api POST /dev/nfc +(j.body||{})+`，后半截当字符串丢了）。
+      const Q = String.fromCharCode(39);
+      if(j.method==="GET") console.log("  → dev api GET "+j.path);
+      else console.log("  → dev api POST "+j.path+" "+Q+(j.body||"{}")+Q);
+    });'
+}
+
+cmd_api() {
+  local m="$1" p="$2" body="$3"
+  if [ -z "$m" ] || [ -z "$p" ]; then
+    echo "dev api 用法：dev api <METHOD> <PATH> [BODY]" >&2
+    echo "  例：dev api GET /dev/status" >&2
+    echo "      dev api POST /dev/bt '{\"op\":\"scan\"}'" >&2
+    return 64
+  fi
+  case "$m" in
+    GET|get)  dsh_http GET "$p" "" ;;
+    POST|post)
+      [ -z "$body" ] && body='{}'
+      dsh_http POST "$p" "$body" ;;
+    *) echo "dev api: 只支持 GET / POST（收到 $m）" >&2; return 64 ;;
+  esac
+}
+
+cmd_raw() {
+  local out rc
+  out=$(dsh_http GET "/dev/routes" "")
+  rc=$?
+  [ $rc -ne 0 ] && return $rc
+  printf '%s\n' "$out"
+  echo
+  echo "上面是桥里真实存在的全部路由；某个 /dev 端点不在这里 = 没注册（不是权限问题）。"
+  echo "catalog_problems 非空表示 EndpointCatalog 与路由表有漂移。"
+}
+
+case "$1" in
+  "")
+    cmd_list; exit $?
+    ;;
+  help|--help|-h)
+    usage; exit 0
+    ;;
+  api)
+    shift; cmd_api "$@"; exit $?
+    ;;
+  raw)
+    cmd_raw; exit $?
+    ;;
+esac
+
+name="$1"; shift
+
+# `dev <能力> --help|help` → 一定只显示用法
+if [ "$1" = "--help" ] || [ "$1" = "-h" ] || [ "$1" = "help" ]; then
+  cmd_detail "$name"; exit $?
+fi
+
+# 有参数 → 执行。先问服务端这个能力怎么调，再拼请求。
+meta=$(dsh_http GET "/dev/help?q=$name" "")
+rc=$?
+[ $rc -ne 0 ] && { echo "dev: 取 $name 的元数据失败（rc=$rc）" >&2; exit $rc; }
+need_node || exit $?
+
+parsed=$(printf '%s' "$meta" | "$NODE" -e '
+  let s=""; process.stdin.on("data",d=>s+=d).on("end",()=>{
+    let j; try { j=JSON.parse(s) } catch(e){ console.log("|||0"); return }
+    console.log((j.method||"")+"|"+(j.path||"")+"|"+(j.body||"")+"|"+(j.ok?1:0));
+  });')
+method="${parsed%%|*}"; rest="${parsed#*|}"
+path="${rest%%|*}"; rest="${rest#*|}"
+dbody="${rest%%|*}"; ok="${rest##*|}"
+
+# 无参数时：GET 直接执行（只读取一次，正是想要的）；POST 缺参数没法执行 → 显示用法。
+# 这是 beta.10 的老行为，保留它 —— `dev status` 应该出状态，而不是出帮助。
+if [ $# -eq 0 ]; then
+  if [ "$ok" = "1" ] && [ "$method" = "GET" ]; then
+    dsh_http GET "$path" ""
+    exit $?
+  fi
+  cmd_detail "$name"
+  exit $?
+fi
+
+if [ "$ok" != "1" ]; then
+  if [ "$method" = "" ]; then
+    echo "dev: 没有这个能力：$name" >&2
+    echo "dev: 用 \`dev\` 看全部可用的名字" >&2
+    exit 64
+  fi
+fi
+
+if [ "$method" = "GET" ]; then
+  qs=""
+  for kv in "$@"; do
+    case "$kv" in
+      *=*) [ -z "$qs" ] && qs="?$kv" || qs="$qs&$kv" ;;
+      *)   [ -z "$qs" ] && qs="?q=$kv" || qs="$qs&q=$kv" ;;
+    esac
+  done
+  dsh_http GET "$path$qs" ""
+  exit $?
+fi
+
+if [ -z "$dbody" ]; then
+  body=$(kv_to_json "$@")
+else
+  body=$(kv_to_json "$@")
+fi
+dsh_http POST "$path" "$body"
+exit $?

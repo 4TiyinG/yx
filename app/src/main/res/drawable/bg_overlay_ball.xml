@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  悬浮窗「折叠态」—— 一颗圆球（v1.2.66）。
+
+  要点：**就做一颗球，用原本的配色，透明**。
+  v1.7.1 起改用与展开面板同一套玻璃底（surface_glass）+ 描边（stroke_glass）：
+  原来写的是 @color/surface（**不透明**），注释说「透明」但实际没做，折叠态是一块
+  实心色块；和面板放在一起，展开/收起时底色会突变。
+
+  尺寸由代码给（COLLAPSED_BALL_DP = 52dp 的 minimumWidth/Height，见 StatusOverlay），
+  球心的状态点仍是运行期染色（灰=空闲/蓝=执行中/绿=完成/红=录音）。
+  旧版问题是**尺寸**（30dp）和**形状**（被内容拉成 95x77 的椭圆）像按钮，
+  不是配色问题 —— 所以只在原有的颜色上做透明，不再另起配色。
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@color/surface_glass" />
+    <stroke
+        android:width="1dp"
+        android:color="@color/stroke_glass" />
+</shape>
