@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  重启 / 启动引擎（v1.6.47，灵动岛专用）
+
+  ## 为什么要换掉原来的图标
+  灵动岛里「重启」与「刷新」原来都是**同一个字形**（`ic_restart` 与
+  `ic_web_refresh` 的 path 数据几乎一致，都是圆形箭头），而且同色、同尺寸、
+  同背景 —— 用户在胶囊上看到的是两枚一模一样的按钮，只能靠位置猜。
+
+  这里改用 Material "power_settings_new"：电源符号的语义是「断电/重启」，
+  与"刷新"（循环箭头）在任何角度都不会混淆；配合琥珀色着色（island_warn）
+  形成第二重区分（颜色 + 字形），色弱用户也能靠形状分辨。
+
+  尺寸与其它岛内按钮保持同一规范：24dp / viewport 24 / 单色 path，
+  最终由 ImageView 的 tint 上色。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@color/icon_color"
+        android:pathData="M13,3h-2v10h2V3zM17.83,5.17l-1.42,1.42C17.99,7.86 19,9.81 19,12c0,3.87 -3.13,7 -7,7s-7,-3.13 -7,-7c0,-2.19 1.01,-4.14 2.58,-5.42L6.17,5.17C4.23,6.82 3,9.26 3,12c0,4.97 4.03,9 9,9s9,-4.03 9,-9c0,-2.74 -1.23,-5.18 -3.17,-6.83z" />
+</vector>

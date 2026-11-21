@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  系统悬浮窗状态条（v1.6.35）：显示在其他应用上层，实时同步 AI 工作状态。
+
+  与顶部灵动岛、无障碍悬浮球共用同一套半透明底（bg_dynamic_island → island_bg），
+  保证三处悬浮 UI 观感统一。
+
+  最小化形态（collapsed）：只保留 12dp 状态点，窗口缩到最小，不遮挡、不阻塞其它应用；
+  展开形态：状态点 + 一行状态文字（思考中 / 执行中 · 动作 / 已完成 / 出错）。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/floatRoot"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@drawable/bg_dynamic_island"
+    android:paddingStart="@dimen/space_10"
+    android:paddingEnd="@dimen/space_12"
+    android:paddingTop="@dimen/space_8"
+    android:paddingBottom="@dimen/space_8"
+    android:elevation="8dp">
+
+    <View
+        android:id="@+id/floatDot"
+        android:layout_width="12dp"
+        android:layout_height="12dp"
+        android:background="@drawable/bg_overlay_dot" />
+
+    <TextView
+        android:id="@+id/floatText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/space_8"
+        android:textSize="@dimen/text_footnote"
+        android:textStyle="bold"
+        android:letterSpacing="0.01"
+        android:textColor="@color/island_text"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:maxWidth="220dp"
+        android:text="" />
+</LinearLayout>

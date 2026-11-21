@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 语音识别服务页（v1.2.93）：单一推荐 + 四步配置教程。
+     顶栏与其它子页同款；内容整体可滚动。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/settings_page_bg">
+
+    <LinearLayout style="@style/Widget.Dsh.Toolbar">
+
+        <ImageView
+            android:id="@+id/btnBack"
+            style="@style/Widget.Dsh.ToolbarIcon"
+            android:src="@drawable/ic_back"
+            android:contentDescription="@string/settings_back" />
+
+        <TextView
+            style="@style/Widget.Dsh.ToolbarTitle"
+            android:text="@string/asrapp_title" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingHorizontal="@dimen/space_16">
+
+        <!-- v1.4.18：平板横屏下限宽居中 -->
+        <app.dsh.mobile.MaxWidthLinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingBottom="@dimen/space_28">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="@dimen/space_8"
+                android:paddingBottom="@dimen/space_12"
+                android:text="@string/asrapp_subtitle"
+                android:textColor="@color/settings_text_secondary"
+                android:textSize="@dimen/text_footnote" />
+
+            <!-- ============ 主卡片：我们的识别服务 ============ -->
+            <LinearLayout
+                android:id="@+id/oursCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="@dimen/space_16"
+                android:paddingVertical="@dimen/space_16"
+                android:background="@drawable/bg_settings_card"
+                android:clickable="true"
+                android:focusable="true"
+                android:stateListAnimator="@animator/press_scale" >
+
+                <FrameLayout
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:background="@drawable/bg_icon_circle_gray"
+                    >
+                    <ImageView
+                        android:layout_width="19dp"
+                        android:layout_height="19dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_download"
+                        android:tint="@color/on_chip" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="@dimen/space_14">
+
+                    <TextView
+                        android:id="@+id/oursTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/settings_text_primary"
+                        android:textSize="@dimen/text_title"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/oursDesc"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_4"
+                        android:textColor="@color/settings_text_secondary"
+                        android:textSize="@dimen/text_footnote" />
+
+                    <TextView
+                        android:id="@+id/oursAction"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_8"
+                        android:textColor="@color/accent"
+                        android:textSize="@dimen/text_body_s"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_chevron" />
+            </LinearLayout>
+
+            <!-- ============ 教程标题 ============ -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_24"
+                android:layout_marginStart="@dimen/space_8"
+                android:layout_marginBottom="@dimen/space_10"
+                android:text="@string/asrapp_guide_title"
+                android:textColor="@color/settings_text_primary"
+                android:textSize="@dimen/text_body_l"
+                android:textStyle="bold" />
+
+            <!-- ① -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="@dimen/space_16"
+                android:paddingVertical="@dimen/space_14"
+                android:layout_marginBottom="@dimen/space_10"
+                android:background="@drawable/bg_settings_card">
+
+                <TextView
+                    android:id="@+id/step1Title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/accent"
+                    android:textSize="@dimen/text_body"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/step1Body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_6"
+                    android:textColor="@color/settings_text_secondary"
+                    android:textSize="@dimen/text_footnote"
+                    android:lineSpacingExtra="4dp" />
+            </LinearLayout>
+
+            <!-- ② -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="@dimen/space_16"
+                android:paddingVertical="@dimen/space_14"
+                android:layout_marginBottom="@dimen/space_10"
+                android:background="@drawable/bg_settings_card">
+
+                <TextView
+                    android:id="@+id/step2Title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/accent"
+                    android:textSize="@dimen/text_body"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/step2Body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_6"
+                    android:textColor="@color/settings_text_secondary"
+                    android:textSize="@dimen/text_footnote"
+                    android:lineSpacingExtra="4dp" />
+            </LinearLayout>
+
+            <!-- ③ -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="@dimen/space_16"
+                android:paddingVertical="@dimen/space_14"
+                android:layout_marginBottom="@dimen/space_10"
+                android:background="@drawable/bg_settings_card">
+
+                <TextView
+                    android:id="@+id/step3Title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/accent"
+                    android:textSize="@dimen/text_body"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/step3Body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_6"
+                    android:textColor="@color/settings_text_secondary"
+                    android:textSize="@dimen/text_footnote"
+                    android:lineSpacingExtra="4dp" />
+            </LinearLayout>
+
+            <!-- ④ -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="@dimen/space_16"
+                android:paddingVertical="@dimen/space_14"
+                android:layout_marginBottom="@dimen/space_10"
+                android:background="@drawable/bg_settings_card">
+
+                <TextView
+                    android:id="@+id/step4Title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/accent"
+                    android:textSize="@dimen/text_body"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/step4Body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_6"
+                    android:textColor="@color/settings_text_secondary"
+                    android:textSize="@dimen/text_footnote"
+                    android:lineSpacingExtra="4dp" />
+            </LinearLayout>
+
+            <!-- ============ 排错 ============ -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="@dimen/space_16"
+                android:paddingVertical="@dimen/space_14"
+                android:layout_marginTop="@dimen/space_14"
+                android:layout_marginBottom="@dimen/space_10"
+                android:background="@drawable/bg_settings_card">
+
+                <TextView
+                    android:id="@+id/troubleTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/warning"
+                    android:textSize="@dimen/text_body"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/troubleBody"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_6"
+                    android:textColor="@color/settings_text_secondary"
+                    android:textSize="@dimen/text_footnote"
+                    android:lineSpacingExtra="4dp" />
+            </LinearLayout>
+
+            <!-- ============ 项目主页 ============ -->
+            <LinearLayout
+                android:id="@+id/repoCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="@dimen/space_16"
+                android:paddingVertical="@dimen/space_14"
+                android:layout_marginBottom="@dimen/space_10"
+                android:background="@drawable/bg_settings_card"
+                android:clickable="true"
+                android:focusable="true"
+                android:stateListAnimator="@animator/press_scale" >
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/repoTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/settings_text_primary"
+                        android:textSize="@dimen/text_body"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/repoDesc"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_4"
+                        android:textColor="@color/settings_text_secondary"
+                        android:textSize="@dimen/text_footnote" />
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_chevron" />
+            </LinearLayout>
+        </app.dsh.mobile.MaxWidthLinearLayout>
+    </ScrollView>
+</LinearLayout>

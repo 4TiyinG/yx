@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  显示状态栏（v1.6.50，灵动岛专用）
+
+  ## 语义
+  「状态栏此刻是**显示**的」→ 点它会隐藏。所以图标画的是**一条完整的顶栏**：
+  上边框 + 左侧时间块 + 右侧电池块，读作"通知栏在那里"。
+
+  ## 为什么不是一个开关拨片
+  胶囊里的按钮只有 24dp，拨片/开关在这么小的尺寸上会退化成两个灰点。
+  这里沿用岛内其它按钮的语言：**单色字形 + tint**，靠"有框/有斜杠"区分两态。
+
+  与 `ic_status_bar_off` 成对使用，两者的外框路径完全一致，只有内部元素不同 ——
+  切换时形状不跳动，只有内容变化（同一位置的两态，用户一眼能对上）。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- 顶栏外框：一条横向长条（2dp 描边），高度 5，覆盖整行 -->
+    <path
+        android:fillColor="@color/icon_color"
+        android:pathData="M2,3h20v2H2zM2,5h2v5H2zM20,5h2v5h-2zM2,10h20v0.001H2z" />
+    <!-- 内容块：左侧时间（短横）、右侧电池（方块） -->
+    <path
+        android:fillColor="@color/icon_color"
+        android:pathData="M5,6.2h5v1.6H5zM15,6.2h4v1.6h-4z" />
+    <!-- 下方两点提示"栏下面是内容区"（与 off 态的斜杠形成对照） -->
+    <path
+        android:fillColor="@color/icon_color"
+        android:pathData="M4,13.5h16v1.6H4zM4,17.5h11v1.6H4z" />
+</vector>

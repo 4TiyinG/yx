@@ -1,0 +1,368 @@
+package app.dsh.mobile.engine.cap
+
+import android.Manifest
+import android.content.ContentUris
+import android.content.Context
+import android.content.pm.PackageManager
+import android.provider.CalendarContract
+import android.provider.ContactsContract
+import android.provider.Telephony
+import app.dsh.mobile.R
+import app.dsh.mobile.engine.CapabilityGate
+import app.dsh.mobile.engine.SensitiveAccess
+import org.json.JSONArray
+import org.json.JSONObject
+
+/**
+ * 个人信息能力：日历、联系人、短信、通话记录（只读 + 有限写入）。
+ *
+ * ## 权限模型（v1.5.0-beta.12 改了）
+ * 四项**各自一个开关**：[CapabilityGate.PERSONAL_CALENDAR]、[PERSONAL_CONTACTS]、
+ * [PERSONAL_SMS]、[PERSONAL_CALLS]。
+ *
+ * 旧设计是捆绑的单一 [CapabilityGate.PERSONAL]：用户想让 AI 看日程，就得连带
+ * 把短信与通话记录一起打开。这是把「愿意让 AI 看日程」和「愿意让 AI 看短信」
+ * 强行等价 —— 而这两件事的风险完全不同。现在拆开后，[gate] 按域逐个判定，
+ * 每次读取都要过两道：用户的细开关 + 平台运行时权限。
+ *
+ * ## 为什么不只靠开关
+ * 开关是「一次性的信任决定」，读取是「持续发生的行为」。用户开过一次不代表
+ * 记得每一次。所以每次成功读取都走 [SensitiveAccess.record] 在通知栏留痕，
+ * 让用户能在自己不该被读的时刻立刻发现并关掉开关。
+ *
+ * ## 为什么短信只做「读 + 跳转发信」而不直接发
+ * `SmsManager.sendTextMessage` 要 SEND_SMS（危险权限），且非默认短信 App 在
+ * Android 10+ 上行为不稳定，还有合规争议。更稳的做法是读取，以及把发信交给系统
+ * 短信界面 —— 用户能看到自己发了什么，也会留下正确的时间线记录。
+ */
+object PersonalCap {
+
+    private fun granted(ctx: Context, perm: String) =
+        ctx.checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED
+
+    /**
+     * 按域判定能力开关。
+     *
+     * @param cap 该域对应的 [CapabilityGate] 常量（如 [CapabilityGate.PERSONAL_SMS]）。
+     */
+    private fun gate(ctx: Context, cap: String): Pair<Int, String>? {
+        if (!CapabilityGate.can(ctx, cap)) {
+            return 403 to JSONObject().put("ok", false)
+                .put("error", "capability disabled")
+                .put("capability", cap)
+                .put("hint", ctx.getString(R.string.personal_cap_disabled_hint))
+                .toString()
+        }
+        return null
+    }
+
+    // ── 日历 ────────────────────────────────────────────────────────────────
+
+    /**
+     * GET /dev/calendar —— 列出指定时间窗内的日程。
+     *
+     * query: `from=<毫秒>&to=<毫秒>&limit=50`（缺省从现在到 7 天后）。
+     */
+    fun calendar(ctx: Context, query: String): Pair<Int, String> {
+        gate(ctx, CapabilityGate.PERSONAL_CALENDAR)?.let { return it }
+        if (!granted(ctx, Manifest.permission.READ_CALENDAR)) {
+            return 403 to JSONObject().put("ok", false)
+                .put("error", "permission missing").put("permission", "READ_CALENDAR").toString()
+        }
+        val q = query.split('&')
+        val now = System.currentTimeMillis()
+        val from = q.firstOrNull { it.startsWith("from=") }?.substringAfter('=')?.toLongOrNull() ?: now
+        val to = q.firstOrNull { it.startsWith("to=") }?.substringAfter('=')?.toLongOrNull()
+            ?: (now + 7L * 24 * 3600 * 1000)
+        val limit = q.firstOrNull { it.startsWith("limit=") }?.substringAfter('=')?.toIntOrNull()
+            ?.coerceIn(1, 200) ?: 50
+
+        val arr = JSONArray()
+        runCatching {
+            val proj = arrayOf(
+                CalendarContract.Instances.EVENT_ID,
+                CalendarContract.Instances.TITLE,
+                CalendarContract.Instances.BEGIN,
+                CalendarContract.Instances.END,
+                CalendarContract.Instances.ALL_DAY,
+                CalendarContract.Instances.EVENT_LOCATION,
+                CalendarContract.Instances.CALENDAR_DISPLAY_NAME,
+            )
+            val uri = CalendarContract.Instances.CONTENT_URI.buildUpon()
+                .appendPath(from.toString()).appendPath(to.toString()).build()
+            ctx.contentResolver.query(uri, proj, null, null, "${CalendarContract.Instances.BEGIN} ASC")?.use { c ->
+                while (c.moveToNext() && arr.length() < limit) {
+                    arr.put(
+                        JSONObject()
+                            .put("id", c.getLong(0))
+                            .put("title", c.getString(1).orEmpty())
+                            .put("begin_ms", c.getLong(2))
+                            .put("end_ms", c.getLong(3))
+                            .put("all_day", c.getInt(4) == 1)
+                            .put("location", c.getString(5).orEmpty())
+                            .put("calendar", c.getString(6).orEmpty()),
+                    )
+                }
+            }
+        }.onFailure { e ->
+            return 500 to JSONObject().put("ok", false).put("error", "query_failed")
+                .put("detail", e.message.orEmpty().take(160)).toString()
+        }
+        CapabilityGate.audit(ctx, "dev.calendar.list")
+        SensitiveAccess.record(ctx, SensitiveAccess.Kind.CALENDAR, arr.length())
+        return 200 to JSONObject().put("ok", true).put("from", from).put("to", to).put("items", arr).toString()
+    }
+
+    /**
+     * POST /dev/calendar —— 新建一条日程。
+     *
+     * body: `{"title":"...","begin_ms":0,"end_ms":0,"location":"","notes":"","calendar_id":0}`
+     *
+     * 不传 `calendar_id` 时用第一个可写日历 —— 绝大多数设备上就一个主日历，
+     * 让调用方去查 id 纯属多余。查不到可写日历时明确报错，而不是默默失败。
+     */
+    fun calendarAdd(ctx: Context, body: String): Pair<Int, String> {
+        gate(ctx, CapabilityGate.PERSONAL_CALENDAR)?.let { return it }
+        if (!granted(ctx, Manifest.permission.WRITE_CALENDAR)) {
+            return 403 to JSONObject().put("ok", false)
+                .put("error", "permission missing").put("permission", "WRITE_CALENDAR").toString()
+        }
+        val req = runCatching { JSONObject(body) }.getOrNull()
+            ?: return 400 to JSONObject().put("ok", false).put("error", "invalid json").toString()
+        val title = req.optString("title").ifBlank {
+            return 400 to JSONObject().put("ok", false).put("error", "missing title").toString()
+        }
+        val begin = req.optLong("begin_ms", 0L)
+        if (begin <= 0L) {
+            return 400 to JSONObject().put("ok", false).put("error", "missing begin_ms").toString()
+        }
+        val end = req.optLong("end_ms", begin + 3600_000L).coerceAtLeast(begin + 60_000L)
+        val calId = req.optLong("calendar_id", 0L).takeIf { it > 0 } ?: firstWritableCalendar(ctx)
+            ?: return 409 to JSONObject().put("ok", false)
+                .put("error", "no_writable_calendar")
+                .put("hint", "device has no calendar account with write access")
+                .toString()
+
+        return runCatching {
+            val values = android.content.ContentValues().apply {
+                put(CalendarContract.Events.DTSTART, begin)
+                put(CalendarContract.Events.DTEND, end)
+                put(CalendarContract.Events.TITLE, title)
+                put(CalendarContract.Events.CALENDAR_ID, calId)
+                put(CalendarContract.Events.EVENT_TIMEZONE, java.util.TimeZone.getDefault().id)
+                req.optString("location").takeIf { it.isNotBlank() }?.let {
+                    put(CalendarContract.Events.EVENT_LOCATION, it)
+                }
+                req.optString("notes").takeIf { it.isNotBlank() }?.let {
+                    put(CalendarContract.Events.DESCRIPTION, it)
+                }
+            }
+            val uri = ctx.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
+                ?: return 500 to JSONObject().put("ok", false).put("error", "insert_returned_null").toString()
+            val id = ContentUris.parseId(uri)
+            CapabilityGate.audit(ctx, "dev.calendar.add:$id")
+            200 to JSONObject().put("ok", true).put("id", id).put("calendar_id", calId).toString()
+        }.getOrElse { e ->
+            500 to JSONObject().put("ok", false).put("error", "insert_failed")
+                .put("detail", e.message.orEmpty().take(160)).toString()
+        }
+    }
+
+    private fun firstWritableCalendar(ctx: Context): Long? = runCatching {
+        val proj = arrayOf(CalendarContract.Calendars._ID, CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL)
+        ctx.contentResolver.query(CalendarContract.Calendars.CONTENT_URI, proj, null, null, null)?.use { c ->
+            while (c.moveToNext()) {
+                // CALENDAR_ACCESS_LEVEL >= 500（CONTRIBUTOR）才有写权限；
+                // 只读日历（如节假日订阅）插进去会抛 IllegalArgumentException。
+                if (c.getInt(1) >= CalendarContract.Calendars.CAL_ACCESS_CONTRIBUTOR) return@use c.getLong(0)
+            }
+        }
+        null
+    }.getOrNull()
+
+    // ── 联系人 ──────────────────────────────────────────────────────────────
+
+    /** GET /dev/contacts —— 按姓名/号码片段搜索联系人。query: `q=张三&limit=20` */
+    fun contacts(ctx: Context, query: String): Pair<Int, String> {
+        gate(ctx, CapabilityGate.PERSONAL_CONTACTS)?.let { return it }
+        if (!granted(ctx, Manifest.permission.READ_CONTACTS)) {
+            return 403 to JSONObject().put("ok", false)
+                .put("error", "permission missing").put("permission", "READ_CONTACTS").toString()
+        }
+        val q = query.split('&')
+        val needle = q.firstOrNull { it.startsWith("q=") }?.substringAfter('=')?.let {
+            android.net.Uri.decode(it)
+        }.orEmpty()
+        val limit = q.firstOrNull { it.startsWith("limit=") }?.substringAfter('=')?.toIntOrNull()
+            ?.coerceIn(1, 100) ?: 20
+
+        val arr = JSONArray()
+        runCatching {
+            val proj = arrayOf(
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                ContactsContract.CommonDataKinds.Phone.NUMBER,
+                ContactsContract.CommonDataKinds.Phone.TYPE,
+                ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
+            )
+            val sel = if (needle.isBlank()) null
+            else "(${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} LIKE ? OR " +
+                "${ContactsContract.CommonDataKinds.Phone.NUMBER} LIKE ?)"
+            val args = if (needle.isBlank()) null else arrayOf("%$needle%", "%$needle%")
+            ctx.contentResolver.query(
+                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                proj, sel, args,
+                "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} ASC",
+            )?.use { c ->
+                while (c.moveToNext() && arr.length() < limit) {
+                    arr.put(
+                        JSONObject()
+                            .put("name", c.getString(0).orEmpty())
+                            .put("number", c.getString(1).orEmpty())
+                            .put("type", c.getInt(2))
+                            .put("contact_id", c.getLong(3)),
+                    )
+                }
+            }
+        }.onFailure { e ->
+            return 500 to JSONObject().put("ok", false).put("error", "query_failed")
+                .put("detail", e.message.orEmpty().take(160)).toString()
+        }
+        CapabilityGate.audit(ctx, "dev.contacts.list")
+        SensitiveAccess.record(ctx, SensitiveAccess.Kind.CONTACTS, arr.length())
+        return 200 to JSONObject().put("ok", true).put("query", needle).put("items", arr).toString()
+    }
+
+    /** POST /dev/sms-send —— 拉起系统短信界面预填收件人与内容，由用户确认发送。 */
+    fun smsCompose(ctx: Context, body: String): Pair<Int, String> {
+        gate(ctx, CapabilityGate.PERSONAL_SMS)?.let { return it }
+        val req = runCatching { JSONObject(body) }.getOrNull()
+            ?: return 400 to JSONObject().put("ok", false).put("error", "invalid json").toString()
+        val to = req.optString("to")
+        val text = req.optString("text")
+        if (to.isBlank()) return 400 to JSONObject().put("ok", false).put("error", "missing to").toString()
+        val intent = android.content.Intent(android.content.Intent.ACTION_SENDTO).apply {
+            data = android.net.Uri.parse("smsto:" + android.net.Uri.encode(to))
+            if (text.isNotBlank()) putExtra("sms_body", text)
+            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        return runCatching {
+            ctx.startActivity(intent)
+            CapabilityGate.audit(ctx, "dev.sms.compose")
+            200 to JSONObject().put("ok", true).put("handoff", "system_sms_ui").toString()
+        }.getOrElse { e ->
+            500 to JSONObject().put("ok", false).put("error", "no_sms_app")
+                .put("detail", e.message.orEmpty().take(160)).toString()
+        }
+    }
+
+    /** GET /dev/sms —— 读取最近短信。query: `limit=20&address=10086` */
+    fun sms(ctx: Context, query: String): Pair<Int, String> {
+        gate(ctx, CapabilityGate.PERSONAL_SMS)?.let { return it }
+        if (!granted(ctx, Manifest.permission.READ_SMS)) {
+            return 403 to JSONObject().put("ok", false)
+                .put("error", "permission missing").put("permission", "READ_SMS").toString()
+        }
+        val q = query.split('&')
+        val limit = q.firstOrNull { it.startsWith("limit=") }?.substringAfter('=')?.toIntOrNull()
+            ?.coerceIn(1, 100) ?: 20
+        val address = q.firstOrNull { it.startsWith("address=") }?.substringAfter('=')?.let {
+            android.net.Uri.decode(it)
+        }
+        val arr = JSONArray()
+        runCatching {
+            val proj = arrayOf(
+                Telephony.Sms.ADDRESS, Telephony.Sms.BODY,
+                Telephony.Sms.DATE, Telephony.Sms.TYPE, Telephony.Sms.READ,
+            )
+            val sel = if (address.isNullOrBlank()) null else "${Telephony.Sms.ADDRESS} LIKE ?"
+            val args = if (address.isNullOrBlank()) null else arrayOf("%$address%")
+            ctx.contentResolver.query(
+                Telephony.Sms.CONTENT_URI, proj, sel, args, "${Telephony.Sms.DATE} DESC",
+            )?.use { c ->
+                while (c.moveToNext() && arr.length() < limit) {
+                    arr.put(
+                        JSONObject()
+                            .put("address", c.getString(0).orEmpty())
+                            .put("body", c.getString(1).orEmpty())
+                            .put("date_ms", c.getLong(2))
+                            .put("type", c.getInt(3))
+                            .put("read", c.getInt(4) == 1),
+                    )
+                }
+            }
+        }.onFailure { e ->
+            return 500 to JSONObject().put("ok", false).put("error", "query_failed")
+                .put("detail", e.message.orEmpty().take(160)).toString()
+        }
+        CapabilityGate.audit(ctx, "dev.sms.list")
+        SensitiveAccess.record(ctx, SensitiveAccess.Kind.SMS, arr.length())
+        return 200 to JSONObject().put("ok", true).put("items", arr).toString()
+    }
+
+    /**
+     * GET /dev/calls —— 最近通话记录。
+     *
+     * query: `limit=20&type=in|out|missed`（`type` 缺省=全部）
+     *
+     * 2026-11-01 审计发现：`READ_CALL_LOG` 已在 Manifest 声明、权限也已授到，
+     * 但**没有对应端点** —— 权限拿到了却没有任何代码用它，等于白拿。这里补上读取通道。
+     */
+    fun calls(ctx: Context, query: String): Pair<Int, String> {
+        gate(ctx, CapabilityGate.PERSONAL_CALLS)?.let { return it }
+        if (!granted(ctx, Manifest.permission.READ_CALL_LOG)) {
+            return 403 to JSONObject().put("ok", false)
+                .put("error", "permission missing").put("permission", "READ_CALL_LOG").toString()
+        }
+        val q = query.split('&')
+        val limit = q.firstOrNull { it.startsWith("limit=") }?.substringAfter('=')?.toIntOrNull()
+            ?.coerceIn(1, 100) ?: 20
+        val wants = q.firstOrNull { it.startsWith("type=") }?.substringAfter('=')
+        val arr = JSONArray()
+        runCatching {
+            val proj = arrayOf(
+                android.provider.CallLog.Calls.NUMBER,
+                android.provider.CallLog.Calls.CACHED_NAME,
+                android.provider.CallLog.Calls.DATE,
+                android.provider.CallLog.Calls.DURATION,
+                android.provider.CallLog.Calls.TYPE,
+            )
+            val sel = when (wants) {
+                "in" -> "${android.provider.CallLog.Calls.TYPE}=" + android.provider.CallLog.Calls.INCOMING_TYPE
+                "out" -> "${android.provider.CallLog.Calls.TYPE}=" + android.provider.CallLog.Calls.OUTGOING_TYPE
+                "missed" -> "${android.provider.CallLog.Calls.TYPE}=" + android.provider.CallLog.Calls.MISSED_TYPE
+                else -> null
+            }
+            ctx.contentResolver.query(
+                android.provider.CallLog.Calls.CONTENT_URI, proj, sel, null,
+                "${android.provider.CallLog.Calls.DATE} DESC",
+            )?.use { c ->
+                while (c.moveToNext() && arr.length() < limit) {
+                    val t = c.getInt(4)
+                    val kind = when (t) {
+                        android.provider.CallLog.Calls.INCOMING_TYPE -> "incoming"
+                        android.provider.CallLog.Calls.OUTGOING_TYPE -> "outgoing"
+                        android.provider.CallLog.Calls.MISSED_TYPE -> "missed"
+                        android.provider.CallLog.Calls.REJECTED_TYPE -> "rejected"
+                        android.provider.CallLog.Calls.BLOCKED_TYPE -> "blocked"
+                        else -> "other"
+                    }
+                    arr.put(
+                        JSONObject()
+                            .put("number", c.getString(0).orEmpty())
+                            .put("name", c.getString(1).orEmpty())
+                            .put("date_ms", c.getLong(2))
+                            .put("duration_s", c.getLong(3))
+                            .put("type", t)
+                            .put("kind", kind),
+                    )
+                }
+            }
+        }.onFailure { e ->
+            return 500 to JSONObject().put("ok", false).put("error", "query_failed")
+                .put("detail", e.message.orEmpty().take(160)).toString()
+        }
+        CapabilityGate.audit(ctx, "dev.calls.list")
+        SensitiveAccess.record(ctx, SensitiveAccess.Kind.CALLS, arr.length())
+        return 200 to JSONObject().put("ok", true).put("items", arr).toString()
+    }
+}

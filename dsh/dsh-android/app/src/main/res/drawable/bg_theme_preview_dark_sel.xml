@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  深色预览卡 · 选中态（v1.6.22）—— 与 bg_theme_preview_light_sel 同构：
+  原预览图 + 2dp 强调色描边（内缩 1dp，圆角 13dp-1dp），描边色与选中圆点一致。
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:drawable="@drawable/bg_theme_preview_dark" />
+
+    <item
+        android:bottom="1dp"
+        android:left="1dp"
+        android:right="1dp"
+        android:top="1dp">
+        <shape android:shape="rectangle">
+            <stroke
+                android:width="2dp"
+                android:color="@color/icon_blue" />
+            <corners android:radius="@dimen/radius_s" />
+            <solid android:color="@android:color/transparent" />
+        </shape>
+    </item>
+</layer-list>

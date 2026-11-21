@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/settings_page_bg">
+
+    <!-- 顶部栏：返回 + 标题（与设置页一致） -->
+    <LinearLayout style="@style/Widget.Dsh.Toolbar">
+
+        <ImageView
+            android:id="@+id/btnBack"
+            style="@style/Widget.Dsh.ToolbarIcon"
+            android:src="@drawable/ic_back"
+            android:contentDescription="@string/settings_back" />
+
+        <TextView
+            style="@style/Widget.Dsh.ToolbarTitle"
+            android:text="@string/setting_user_prompt" />
+
+        <TextView
+            android:id="@+id/btnSave"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:paddingHorizontal="@dimen/space_18"
+            android:text="@string/user_prompt_save"
+            android:textColor="@color/accent"
+            android:textSize="@dimen/text_title"
+            android:background="?android:attr/selectableItemBackgroundBorderless" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="@dimen/space_16"
+        android:paddingTop="@dimen/space_14"
+        android:text="@string/user_prompt_intro"
+        android:textColor="@color/settings_text_secondary"
+        android:textSize="@dimen/text_body_s"
+        android:lineSpacingExtra="3dp" />
+
+    <EditText
+        android:id="@+id/editorPrompt"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginHorizontal="@dimen/space_16"
+        android:layout_marginTop="@dimen/space_12"
+        android:padding="@dimen/space_14"
+        android:gravity="top|start"
+        android:inputType="textMultiLine|textCapSentences"
+        android:textColor="@color/settings_text_primary"
+        android:textColorHint="@color/text_muted"
+        android:textSize="@dimen/text_body_l"
+        android:lineSpacingExtra="4dp"
+        android:background="@drawable/bg_search_field"
+        android:scrollbars="vertical" />
+
+    <TextView
+        android:id="@+id/txtPath"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="@dimen/space_16"
+        android:paddingTop="@dimen/space_10"
+        android:paddingBottom="@dimen/space_16"
+        android:textColor="@color/text_muted"
+        android:textSize="@dimen/text_footnote" />
+</LinearLayout>

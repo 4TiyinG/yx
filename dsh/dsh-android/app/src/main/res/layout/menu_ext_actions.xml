@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 扩展行「更多操作」浮层菜单（自绘，非框架 PopupMenu：系统默认样式为方形浅色老安卓脸） -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/menuRoot"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_menu_card"
+    android:padding="@dimen/space_6">
+
+    <TextView
+        android:id="@+id/menuReinstall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minWidth="140dp"
+        android:paddingStart="@dimen/space_14"
+        android:paddingEnd="@dimen/space_14"
+        android:paddingTop="@dimen/space_12"
+        android:paddingBottom="@dimen/space_12"
+        android:textSize="@dimen/text_body"
+        android:textColor="@color/text_primary"
+        android:background="@drawable/bg_menu_item"
+        android:text="@string/ext_reinstall_title" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginStart="@dimen/space_10"
+        android:layout_marginEnd="@dimen/space_10"
+        android:background="@color/divider" />
+
+    <TextView
+        android:id="@+id/menuUninstall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="@dimen/space_14"
+        android:paddingEnd="@dimen/space_14"
+        android:paddingTop="@dimen/space_12"
+        android:paddingBottom="@dimen/space_12"
+        android:textSize="@dimen/text_body"
+        android:textColor="@color/danger"
+        android:background="@drawable/bg_menu_item"
+        android:text="@string/ext_uninstall_title" />
+</LinearLayout>

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  设计令牌（v1.6.44）—— 全局唯一的视觉度量来源。
+
+  ## 为什么要这张表
+
+  重构前逐个页面统计出来的"设计语言分裂"实录：
+
+  · **圆角 14 种**：3 / 8 / 10 / 11 / 12 / 13 / 14 / 15 / 16 / 17 / 18 / 20 / 22 / 99 dp。
+    同样是"卡片"，菜单卡 14、设置卡 16、通用卡 18、终端 18、语音面板 20 —— 四个值做同一件事。
+  · **字号 16 种**，其中 **13.5sp / 15.5sp / 16.5sp 是小数**。小数 sp 在不同密度与
+    fontScale 下会落到不同的物理像素边界，字形 hinting 结果不一致 —— 表现就是
+    "两个页面的正文看起来一样大，但一行字的高度差 1px，换页时轻微跳动"。
+  · **间距 27 种**，其中 3 / 7 / 9 / 11 dp 是奇数，破了 2dp 栅格。
+  · 按钮、卡片、对话框、列表行**没有共享样式**，全部在各 layout 里手搓。
+
+  所以这里不引入"第四套设计规范"，而是把**已经在用的值收敛成一条栅格**，
+  再让所有页面引用同一个名字。收敛规则见每组注释。
+
+  ## 收敛原则
+
+  1. **不做视觉重设计**：每个令牌取的就是原来出现次数最多的那个值，页面观感
+     不变，变的只是"同一个语义从此只有一种数值"。
+  2. **2dp 栅格**：间距必须是偶数（奇数在 xxhdpi 以上会落在半个物理像素上，
+     相邻元素的缝隙宽度肉眼不一致）。
+  3. **整数 sp**：字号只用整数，避免 hinting 抖动。
+  4. **圆角 5 档**：xs 内嵌色块 / s 小控件 / m 卡片按钮 / l 大容器 / pill 胶囊。
+-->
+<resources>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         一、间距（2dp 栅格）
+         用途约定：x0 贴边 / x1 紧凑内嵌 / x2 控件内边距 / x3 卡片内边距
+                   x4 卡片间距 / x5 分区间距 / x6 页面边距 / x7 区块留白
+         ══════════════════════════════════════════════════════════════════ -->
+    <dimen name="space_0">0dp</dimen>
+    <dimen name="space_2">2dp</dimen>
+    <dimen name="space_4">4dp</dimen>
+    <dimen name="space_6">6dp</dimen>
+    <dimen name="space_8">8dp</dimen>
+    <dimen name="space_10">10dp</dimen>
+    <dimen name="space_12">12dp</dimen>
+    <dimen name="space_14">14dp</dimen>
+    <dimen name="space_16">16dp</dimen>
+    <dimen name="space_18">18dp</dimen>
+    <dimen name="space_20">20dp</dimen>
+    <dimen name="space_22">22dp</dimen>
+    <dimen name="space_24">24dp</dimen>
+    <dimen name="space_26">26dp</dimen>
+    <dimen name="space_28">28dp</dimen>
+    <dimen name="space_32">32dp</dimen>
+    <dimen name="space_40">40dp</dimen>
+    <dimen name="space_44">44dp</dimen>
+    <dimen name="space_48">48dp</dimen>
+    <!-- 特大留白（页面级垂直节奏 / 启动页顶部）。不进常用栅格，
+         但同样保留名字，避免又出现"随手写的 60、72"。 -->
+    <dimen name="space_56">56dp</dimen>
+    <dimen name="space_60">60dp</dimen>
+    <dimen name="space_64">64dp</dimen>
+    <dimen name="space_72">72dp</dimen>
+
+    <!-- 语义别名：页面直接引用语义名，改栅格时只改上面一层 -->
+    <dimen name="page_padding_h">16dp</dimen>
+    <dimen name="page_padding_bottom">32dp</dimen>
+    <dimen name="card_padding">16dp</dimen>
+    <dimen name="card_gap">10dp</dimen>
+    <dimen name="section_gap">24dp</dimen>
+    <dimen name="row_padding_v">14dp</dimen>
+    <dimen name="row_padding_h">16dp</dimen>
+    <dimen name="toolbar_height">56dp</dimen>
+    <dimen name="touch_target">48dp</dimen>
+    <dimen name="icon_chip">40dp</dimen>
+    <dimen name="icon_small">20dp</dimen>
+
+    <!-- 图标缩进：行首图标 40dp + 间距 18dp / 28dp。
+         这两个值不是"随手写的边距"，而是由 icon_chip + 两档间距推导出来的
+         文本对齐基准（原来散落着 58 / 66 / 68 / 72 四个近似值）。 -->
+    <dimen name="row_text_indent">58dp</dimen>
+    <dimen name="row_text_indent_wide">68dp</dimen>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         二、圆角（5 档，替换原来 14 种）
+         ══════════════════════════════════════════════════════════════════ -->
+    <dimen name="radius_xs">4dp</dimen>
+    <dimen name="radius_s">12dp</dimen>
+    <dimen name="radius_m">16dp</dimen>
+    <dimen name="radius_l">20dp</dimen>
+    <dimen name="radius_pill">999dp</dimen>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         三、字号（整数 sp，8 档）
+         caption < footnote < body_s < body < body_l < title < title_l < headline
+         ══════════════════════════════════════════════════════════════════ -->
+    <dimen name="text_caption">11sp</dimen>
+    <dimen name="text_footnote">12sp</dimen>
+    <dimen name="text_body_s">13sp</dimen>
+    <dimen name="text_body">14sp</dimen>
+    <dimen name="text_body_l">15sp</dimen>
+    <dimen name="text_title">16sp</dimen>
+    <dimen name="text_title_l">20sp</dimen>
+    <dimen name="text_title_xl">22sp</dimen>
+    <dimen name="text_headline">26sp</dimen>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         四、动效（时长 / 位移，全工程唯一来源）
+         对应 ui/Motion.kt 里的常量，两处必须一致（探针会校验）。
+         ══════════════════════════════════════════════════════════════════ -->
+    <integer name="motion_press_ms">90</integer>
+    <integer name="motion_release_ms">170</integer>
+    <integer name="motion_page_in_ms">300</integer>
+    <integer name="motion_page_out_ms">260</integer>
+    <integer name="motion_dialog_in_ms">220</integer>
+    <integer name="motion_dialog_out_ms">160</integer>
+    <integer name="motion_press_scale_pct">96</integer>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         五、布局断点（dp）—— 与 ui/Breakpoints.kt 一致
+         ══════════════════════════════════════════════════════════════════ -->
+    <integer name="bp_compact">600</integer>
+    <integer name="bp_medium">840</integer>
+    <integer name="bp_expanded">1100</integer>
+
+    <!-- 单列阅读型内容的最大宽度：竖屏收窄利于扫读，横屏放开铺满 -->
+    <dimen name="content_cap_portrait">760dp</dimen>
+    <dimen name="content_cap_landscape">1080dp</dimen>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         六、层级与描边
+         ══════════════════════════════════════════════════════════════════ -->
+    <dimen name="elevation_toolbar">2dp</dimen>
+    <dimen name="elevation_card">0dp</dimen>
+    <dimen name="elevation_sheet">12dp</dimen>
+    <dimen name="stroke_hairline">1dp</dimen>
+    <dimen name="stroke_focus">1.5dp</dimen>
+
+</resources>

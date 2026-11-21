@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 设置页背景图（v1.5.x）
+     选图 + 不透明度 + 模糊强度，三项都实时反映在上方预览里。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/settings_page_bg">
+
+    <LinearLayout style="@style/Widget.Dsh.Toolbar">
+
+        <ImageView
+            android:id="@+id/btnBack"
+            style="@style/Widget.Dsh.ToolbarIcon"
+            android:src="@drawable/ic_back"
+            android:contentDescription="@string/settings_back" />
+
+        <TextView
+            style="@style/Widget.Dsh.ToolbarTitle"
+            android:text="@string/setting_settings_bg" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/space_16"
+            android:paddingTop="@dimen/space_12"
+            android:paddingBottom="@dimen/space_24">
+
+            <!-- ===== 预览 + 选择/移除 ===== -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/space_12"
+                android:background="@drawable/bg_settings_card">
+
+                <!-- 预览：模拟设置页"背景 + 卡片"的观感 -->
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="160dp"
+                    android:background="@color/surface_alt">
+
+                    <ImageView
+                        android:id="@+id/imgBgPreview"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop" />
+
+                    <!-- 叠一张半透明卡片，模拟实际页面上卡片压在背景上的样子 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_gravity="center"
+                        android:layout_marginHorizontal="@dimen/space_24"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="@dimen/space_16"
+                        android:background="@drawable/bg_settings_card">
+
+                        <TextView
+                            android:id="@+id/txtPreviewHint"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/setting_image_none"
+                            android:textColor="@color/settings_text_primary"
+                            android:textSize="@dimen/text_body" />
+                    </LinearLayout>
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginTop="@dimen/space_14">
+
+                    <Button
+                        android:id="@+id/btnPickBg"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="@dimen/space_6"
+                        android:text="@string/action_choose_image"
+                        android:textAllCaps="false"
+                        android:background="@drawable/bg_btn_accent_ripple"
+                        android:textColor="@color/on_accent" />
+
+                    <Button
+                        android:id="@+id/btnRemoveBg"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="@dimen/space_6"
+                        android:text="@string/action_remove_image"
+                        android:textAllCaps="false"
+                        android:background="@drawable/bg_btn_outline_ripple"
+                        android:textColor="@color/settings_text_primary" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ===== 不透明度 ===== -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/setting_bg_alpha"
+                android:textColor="@color/accent"
+                android:textSize="@dimen/text_body_s"
+                android:textStyle="bold"
+                android:paddingStart="@dimen/space_8"
+                android:paddingTop="@dimen/space_18"
+                android:paddingBottom="@dimen/space_8" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="@dimen/space_16"
+                android:paddingVertical="@dimen/space_14"
+                android:background="@drawable/bg_settings_card">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/setting_bg_alpha_sub"
+                        android:textColor="@color/settings_text_secondary"
+                        android:textSize="@dimen/text_footnote" />
+
+                    <TextView
+                        android:id="@+id/valBgAlpha"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/accent"
+                        android:textSize="@dimen/text_body"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <SeekBar
+                    android:id="@+id/seekBgAlpha"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_8"
+                    android:max="100"
+                    android:progressTint="@color/accent"
+                    android:thumbTint="@color/accent"
+                    android:progressBackgroundTint="@color/stroke" />
+            </LinearLayout>
+
+            <!-- ===== 模糊 ===== -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/setting_bg_blur"
+                android:textColor="@color/accent"
+                android:textSize="@dimen/text_body_s"
+                android:textStyle="bold"
+                android:paddingStart="@dimen/space_8"
+                android:paddingTop="@dimen/space_18"
+                android:paddingBottom="@dimen/space_8" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="@dimen/space_16"
+                android:paddingVertical="@dimen/space_14"
+                android:background="@drawable/bg_settings_card">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/setting_bg_blur_sub"
+                        android:textColor="@color/settings_text_secondary"
+                        android:textSize="@dimen/text_footnote" />
+
+                    <TextView
+                        android:id="@+id/valBgBlur"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/accent"
+                        android:textSize="@dimen/text_body"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <SeekBar
+                    android:id="@+id/seekBgBlur"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_8"
+                    android:max="24"
+                    android:progressTint="@color/accent"
+                    android:thumbTint="@color/accent"
+                    android:progressBackgroundTint="@color/stroke" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

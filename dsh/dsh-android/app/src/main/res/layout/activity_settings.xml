@@ -1,0 +1,1460 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/settingsRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/settings_page_bg">
+
+    <ScrollView
+        android:id="@+id/settingsScroller"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <app.dsh.mobile.MaxWidthLinearLayout
+            android:id="@+id/settingsContentWidth"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/space_16"
+            android:paddingBottom="@dimen/space_32">
+
+            <!-- v1.6.45：大标题回到滚动内容里（原来它是不透明条上的浮层）。
+
+                 旧结构里它盖在滚动内容之上、底衬只有 62dp，导致 62~100dp 那一段
+                 的字腔里能看见列表行滚过去 —— 用户看到的「闪烁残留」。
+                 放进内容后它随内容上移、被裁、再被不透明的 CollapsingTitleBar 盖住，
+                 全程不存在"浮层压在运动内容上"的时刻。
+
+                 这个 125dp 的盒子同时承担"顶部留白"：标题仍从 60dp 起（与改动前
+                 同一位置），盒子剩下的部分让首页搜索栏继续从 125dp 开始。 -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="125dp">
+
+                <TextView
+                    android:id="@+id/settingsTitle"
+                    style="@style/SettingsTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top"
+                    android:layout_marginTop="@dimen/space_60"
+                    android:text="@string/settings_title" />
+            </FrameLayout>
+
+            <!-- 首页搜索入口（v1.6.38）。
+
+                 旧实现把它放在 ScrollView **外面**（固定悬浮兄弟节点），再用手写的
+                 scaleY + 子 View alpha 去模拟「随滚动收缩」。代价是：这份视觉状态
+                 只能靠 closeSearch 的 postDelayed 回调恢复，一旦动画被打断
+                 （重入、转屏、叠层、提前 return），alpha/scale 就永久停在中间值,
+                 于是它带着图标残在列表上方 = 截图里的重叠 Bug。
+
+                 现在按 preview 的做法放进滚动内容：滚动时它自己会跟着内容走，
+                 收缩只是纯几何变换，**没有任何需要恢复的状态**。 -->
+            <LinearLayout
+                android:id="@+id/homeSearchBar"
+                android:layout_width="match_parent"
+                android:layout_height="43dp"
+                android:layout_marginBottom="@dimen/space_6"
+                android:background="@drawable/bg_settings_search"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="@dimen/space_14"
+                android:paddingEnd="@dimen/space_14">
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_search"
+                    android:tint="@color/settings_text_secondary" />
+                <TextView
+                    android:id="@+id/searchSettings"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="@dimen/space_10"
+                    android:layout_weight="1"
+                    android:background="@null"
+                    android:gravity="center_vertical"
+                    android:hint="@string/settings_search_hint"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textColor="@color/settings_text_primary"
+                    android:textColorHint="@color/settings_text_secondary"
+                    android:textSize="@dimen/text_title" />
+
+                <ImageView
+                    android:id="@+id/btnVoiceSearch"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_mic"
+                    android:tint="@color/settings_text_secondary" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/settingsColumns"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:baselineAligned="false"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/columnPrimary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_10"
+                        android:background="@drawable/bg_settings_card"
+                        android:clipToOutline="true"
+                        android:orientation="vertical"
+                        android:tag="setting_profile">
+
+                        <LinearLayout
+                            android:id="@+id/rowAppProfile"
+                            android:layout_width="match_parent"
+                            android:layout_height="80dp"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:tag="setting_row">
+
+                            <FrameLayout
+                                android:layout_width="46dp"
+                                android:layout_height="46dp"
+                                android:background="@drawable/bg_icon_circle_blue">
+                                <ImageView
+                                    android:layout_width="30dp"
+                                    android:layout_height="30dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_launcher_foreground" />
+                            </FrameLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="sans-serif-medium"
+                                    android:text="@string/app_name"
+                                    android:textColor="@color/settings_text_primary"
+                                    android:textSize="@dimen/text_title" />
+                                <TextView
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:text="@string/settings_profile_sub" />
+                            </LinearLayout>
+
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_chevron"
+                                android:tint="@color/settings_chevron" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_10"
+                        android:background="@drawable/bg_settings_card"
+                        android:clipToOutline="true"
+                        android:orientation="vertical"
+                        android:tag="setting_card">
+
+                        <LinearLayout
+                            android:id="@+id/rowAppearance"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_10"
+                            android:tag="setting_row">
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_icon_circle_orange">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_palette"
+                                    android:tint="@color/on_chip" />
+                            </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    style="@style/SettingsRowTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/settings_section_appearance" />
+                                <TextView
+                                    android:id="@+id/subAppearanceEntry"
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:ellipsize="end"
+                                    android:maxLines="2"
+                                    android:tag="setting_summary" />
+                            </LinearLayout>
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_chevron"
+                                android:tint="@color/settings_chevron" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginStart="@dimen/row_text_indent"
+                            android:layout_marginEnd="@dimen/space_16"
+                            android:background="@color/settings_divider" />
+
+                        <LinearLayout
+                            android:id="@+id/rowExt"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_10"
+                            android:tag="setting_row">
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_icon_circle_purple">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_puzzle"
+                                    android:tint="@color/on_chip" />
+                            </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    style="@style/SettingsRowTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/setting_ext" />
+                                <TextView
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:ellipsize="end"
+                                    android:maxLines="1"
+                                    android:tag="setting_summary"
+                                    android:text="@string/setting_ext_sub" />
+                            </LinearLayout>
+                            <TextView
+                                android:id="@+id/valExt"
+                                style="@style/SettingsValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="@dimen/space_6" />
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_chevron"
+                                android:tint="@color/settings_chevron" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginStart="@dimen/row_text_indent"
+                            android:layout_marginEnd="@dimen/space_16"
+                            android:background="@color/settings_divider" />
+
+                        <LinearLayout
+                            android:id="@+id/rowExtensionVoice"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_10"
+                            android:tag="setting_row">
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_icon_circle_blue">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_mic"
+                                    android:tint="@color/on_chip" />
+                            </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    style="@style/SettingsRowTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/settings_section_voice_plugins" />
+                                <TextView
+                                    android:id="@+id/subExtensionEntry"
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:ellipsize="end"
+                                    android:maxLines="2"
+                                    android:tag="setting_summary" />
+                            </LinearLayout>
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_chevron"
+                                android:tint="@color/settings_chevron" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_10"
+                        android:background="@drawable/bg_settings_card"
+                        android:clipToOutline="true"
+                        android:orientation="vertical"
+                        android:tag="setting_card">
+
+                        <LinearLayout
+                            android:id="@+id/rowPermEngine"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_10"
+                            android:tag="setting_row">
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_icon_circle_blue">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_shield"
+                                    android:tint="@color/on_chip" />
+                            </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    style="@style/SettingsRowTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/settings_section_permission" />
+                                <TextView
+                                    android:id="@+id/subPermEngine"
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:ellipsize="end"
+                                    android:maxLines="2"
+                                    android:tag="setting_summary"
+                                    android:text="@string/settings_perm_all_sub" />
+                            </LinearLayout>
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_chevron"
+                                android:tint="@color/settings_chevron" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/columnSecondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_10"
+                        android:background="@drawable/bg_settings_card"
+                        android:clipToOutline="true"
+                        android:orientation="vertical"
+                        android:tag="setting_card">
+
+                        <LinearLayout
+                            android:id="@+id/rowUserPrompt"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_10"
+                            android:tag="setting_row">
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_icon_circle_teal">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_note"
+                                    android:tint="@color/on_chip" />
+                            </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    style="@style/SettingsRowTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/setting_user_prompt" />
+                                <TextView
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:ellipsize="end"
+                                    android:maxLines="2"
+                                    android:tag="setting_summary"
+                                    android:text="@string/setting_user_prompt_sub" />
+                            </LinearLayout>
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_chevron"
+                                android:tint="@color/settings_chevron" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginStart="@dimen/row_text_indent"
+                            android:layout_marginEnd="@dimen/space_16"
+                            android:background="@color/settings_divider" />
+
+                        <LinearLayout
+                            android:id="@+id/rowBackup"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_10"
+                            android:tag="setting_row">
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_icon_circle_green">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_restore"
+                                    android:tint="@color/on_chip" />
+                            </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    style="@style/SettingsRowTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/setting_backup" />
+                                <TextView
+                                    android:id="@+id/subBackup"
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:ellipsize="end"
+                                    android:maxLines="2"
+                                    android:tag="setting_summary" />
+                            </LinearLayout>
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_chevron"
+                                android:tint="@color/settings_chevron" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_10"
+                        android:background="@drawable/bg_settings_card"
+                        android:clipToOutline="true"
+                        android:orientation="vertical"
+                        android:tag="setting_card">
+
+                        <!-- 系统悬浮窗状态条（v1.6.35）：App 退到后台/其它应用上层时显示 AI 工作状态 -->
+                        <LinearLayout
+                            android:id="@+id/rowFloatStatus"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_10"
+                            android:tag="setting_row">
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_icon_circle_blue">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_web_refresh"
+                                    android:tint="@color/on_chip" />
+                            </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    style="@style/SettingsRowTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/float_status_title" />
+                                <TextView
+                                    android:id="@+id/floatStatusSub"
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:maxLines="3"
+                                    android:tag="setting_summary"
+                                    android:text="@string/float_status_sub" />
+                            </LinearLayout>
+                            <Switch
+                                android:id="@+id/swFloatStatus"
+                                style="@style/SettingsSwitch"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_8" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginStart="@dimen/row_text_indent"
+                            android:layout_marginEnd="@dimen/space_16"
+                            android:background="@color/settings_divider" />
+
+                        <LinearLayout
+                            android:id="@+id/rowLanWeb"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_10"
+                            android:tag="setting_row">
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_icon_circle_blue">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_lan"
+                                    android:tint="@color/on_chip" />
+                            </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    style="@style/SettingsRowTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/setting_lan_web" />
+                                <TextView
+                                    android:id="@+id/lanWebSub"
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:maxLines="3"
+                                    android:tag="setting_summary" />
+                            </LinearLayout>
+                            <Switch
+                                android:id="@+id/swLanWeb"
+                                style="@style/SettingsSwitch"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_8" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginStart="@dimen/row_text_indent"
+                            android:layout_marginEnd="@dimen/space_16"
+                            android:background="@color/settings_divider" />
+
+                        <LinearLayout
+                            android:id="@+id/rowRuntimeProxy"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_10"
+                            android:tag="setting_row">
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_icon_circle_gray">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_download"
+                                    android:tint="@color/on_chip" />
+                            </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    style="@style/SettingsRowTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/setting_runtime_proxy" />
+                                <TextView
+                                    android:id="@+id/subRuntimeProxy"
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:ellipsize="end"
+                                    android:maxLines="1"
+                                    android:tag="setting_summary" />
+                            </LinearLayout>
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_chevron"
+                                android:tint="@color/settings_chevron" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_10"
+                        android:background="@drawable/bg_settings_card"
+                        android:clipToOutline="true"
+                        android:orientation="vertical"
+                        android:tag="setting_card">
+
+                        <LinearLayout
+                            android:id="@+id/rowFastPluginBoot"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_10"
+                            android:tag="setting_row">
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_icon_circle_purple">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_puzzle"
+                                    android:tint="@color/on_chip" />
+                            </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    style="@style/SettingsRowTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/fast_plugin_boot_title" />
+                                <TextView
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:ellipsize="end"
+                                    android:maxLines="2"
+                                    android:tag="setting_summary"
+                                    android:text="@string/fast_plugin_boot_sub" />
+                            </LinearLayout>
+                            <Switch
+                                android:id="@+id/swFastPluginBoot"
+                                style="@style/SettingsSwitch"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_8" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginStart="@dimen/row_text_indent"
+                            android:layout_marginEnd="@dimen/space_16"
+                            android:background="@color/settings_divider" />
+
+                        <LinearLayout
+                            android:id="@+id/rowPluginPriority"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_10"
+                            android:tag="setting_row">
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_icon_circle_blue">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_puzzle"
+                                    android:tint="@color/on_chip" />
+                            </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    style="@style/SettingsRowTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/plugin_priority_title" />
+                                <TextView
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:ellipsize="end"
+                                    android:maxLines="2"
+                                    android:tag="setting_summary"
+                                    android:text="@string/plugin_priority_sub" />
+                            </LinearLayout>
+                            <Switch
+                                android:id="@+id/swPluginPriority"
+                                style="@style/SettingsSwitch"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_8" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginStart="@dimen/row_text_indent"
+                            android:layout_marginEnd="@dimen/space_16"
+                            android:background="@color/settings_divider" />
+
+                        <LinearLayout
+                            android:id="@+id/rowFakeLinux"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_10"
+                            android:tag="setting_row">
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_icon_circle_teal">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_globe"
+                                    android:tint="@color/on_chip" />
+                            </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    style="@style/SettingsRowTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/fake_linux_title" />
+                                <TextView
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:ellipsize="end"
+                                    android:maxLines="2"
+                                    android:tag="setting_summary"
+                                    android:text="@string/fake_linux_sub" />
+                            </LinearLayout>
+                            <Switch
+                                android:id="@+id/swFakeLinux"
+                                style="@style/SettingsSwitch"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_8" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginStart="@dimen/row_text_indent"
+                            android:layout_marginEnd="@dimen/space_16"
+                            android:background="@color/settings_divider" />
+
+                        <!-- v1.6.49：V8 年轻代加宽。默认关 —— 这是「内存换 CPU」的
+                             参数，必须让用户按设备实际情况决定，而不是替他猜。 -->
+                        <LinearLayout
+                            android:id="@+id/rowV8WideYoung"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_10"
+                            android:tag="setting_row">
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_icon_circle_teal">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_speed"
+                                    android:tint="@color/on_chip" />
+                            </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    style="@style/SettingsRowTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/v8_wide_young_title" />
+                                <TextView
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:ellipsize="end"
+                                    android:maxLines="2"
+                                    android:tag="setting_summary"
+                                    android:text="@string/v8_wide_young_sub" />
+                            </LinearLayout>
+                            <Switch
+                                android:id="@+id/swV8WideYoung"
+                                style="@style/SettingsSwitch"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_8" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginStart="@dimen/row_text_indent"
+                            android:layout_marginEnd="@dimen/space_16"
+                            android:background="@color/settings_divider" />
+
+                        <LinearLayout
+                            android:id="@+id/rowMaintenance"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_10"
+                            android:tag="setting_row">
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_icon_circle_gray">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_settings"
+                                    android:tint="@color/on_chip" />
+                            </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    style="@style/SettingsRowTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/setting_maintenance" />
+                                <TextView
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:ellipsize="end"
+                                    android:maxLines="1"
+                                    android:tag="setting_summary"
+                                    android:text="@string/setting_maintenance_sub" />
+                            </LinearLayout>
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_chevron"
+                                android:tint="@color/settings_chevron" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginStart="@dimen/row_text_indent"
+                            android:layout_marginEnd="@dimen/space_16"
+                            android:background="@color/settings_divider" />
+
+                        <LinearLayout
+                            android:id="@+id/rowLanguage"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_10"
+                            android:tag="setting_row">
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_icon_circle_blue">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_language"
+                                    android:tint="@color/on_chip" />
+                            </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    style="@style/SettingsRowTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/app_language" />
+                                <TextView
+                                    android:id="@+id/appLanguageSub"
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:ellipsize="end"
+                                    android:maxLines="1"
+                                    android:tag="setting_summary" />
+                            </LinearLayout>
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_chevron"
+                                android:tint="@color/settings_chevron" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginStart="@dimen/row_text_indent"
+                            android:layout_marginEnd="@dimen/space_16"
+                            android:background="@color/settings_divider" />
+
+                        <LinearLayout
+                            android:id="@+id/rowAbout"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_10"
+                            android:tag="setting_row">
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_icon_circle_green">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_info"
+                                    android:tint="@color/on_chip" />
+                            </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    style="@style/SettingsRowTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/setting_about" />
+                                <TextView
+                                    android:id="@+id/subAbout"
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:ellipsize="end"
+                                    android:maxLines="1"
+                                    android:tag="setting_summary" />
+                            </LinearLayout>
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_chevron"
+                                android:tint="@color/settings_chevron" />
+                        </LinearLayout>
+                    </LinearLayout>
+                    <!-- v1.6.45：性能与流畅度。四个旋钮都是真实影响帧时间/首屏时间的，
+                         默认值与改动前完全一致（不选也不会变慢或变丑）。 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_10"
+                        android:background="@drawable/bg_settings_card"
+                        android:clipToOutline="true"
+                        android:orientation="vertical"
+                        android:tag="setting_card">
+
+                        <LinearLayout
+                            android:id="@+id/rowPerfMotion"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_10"
+                            android:tag="setting_row">
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_icon_circle_purple">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_speed"
+                                    android:tint="@color/on_chip" />
+                            </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    style="@style/SettingsRowTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/perf_motion" />
+                                <TextView
+                                    android:id="@+id/subPerfMotion"
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:ellipsize="end"
+                                    android:maxLines="2"
+                                    android:tag="setting_summary"
+                                    android:text="@string/perf_motion_sub" />
+                            </LinearLayout>
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_chevron"
+                                android:tint="@color/settings_chevron" />
+                        </LinearLayout>
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginStart="@dimen/row_text_indent"
+                            android:layout_marginEnd="@dimen/space_16"
+                            android:background="@color/settings_divider" />
+
+                        <LinearLayout
+                            android:id="@+id/rowPerfRender"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_10"
+                            android:tag="setting_row">
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_icon_circle_teal">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_display"
+                                    android:tint="@color/on_chip" />
+                            </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    style="@style/SettingsRowTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/perf_render" />
+                                <TextView
+                                    android:id="@+id/subPerfRender"
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:ellipsize="end"
+                                    android:maxLines="2"
+                                    android:tag="setting_summary"
+                                    android:text="@string/perf_render_sub" />
+                            </LinearLayout>
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_chevron"
+                                android:tint="@color/settings_chevron" />
+                        </LinearLayout>
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginStart="@dimen/row_text_indent"
+                            android:layout_marginEnd="@dimen/space_16"
+                            android:background="@color/settings_divider" />
+
+                        <LinearLayout
+                            android:id="@+id/rowPerfPreload"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_10"
+                            android:tag="setting_row">
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_icon_circle_blue">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_download"
+                                    android:tint="@color/on_chip" />
+                            </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    style="@style/SettingsRowTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/perf_preload" />
+                                <TextView
+                                    android:id="@+id/subPerfPreload"
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:ellipsize="end"
+                                    android:maxLines="2"
+                                    android:tag="setting_summary"
+                                    android:text="@string/perf_preload_sub" />
+                            </LinearLayout>
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_chevron"
+                                android:tint="@color/settings_chevron" />
+                        </LinearLayout>
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginStart="@dimen/row_text_indent"
+                            android:layout_marginEnd="@dimen/space_16"
+                            android:background="@color/settings_divider" />
+
+                        <LinearLayout
+                            android:id="@+id/rowPerfPrescale"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_10"
+                            android:tag="setting_row">
+                            <FrameLayout
+                                android:layout_width="34dp"
+                                android:layout_height="34dp"
+                                android:background="@drawable/bg_icon_circle_orange">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_image"
+                                    android:tint="@color/on_chip" />
+                            </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/space_16"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    style="@style/SettingsRowTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/perf_prescale" />
+                                <TextView
+                                    android:id="@+id/subPerfPrescale"
+                                    style="@style/SettingsRowSummary"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/space_2"
+                                    android:ellipsize="end"
+                                    android:maxLines="2"
+                                    android:tag="setting_summary"
+                                    android:text="@string/perf_prescale_sub" />
+                            </LinearLayout>
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_chevron"
+                                android:tint="@color/settings_chevron" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </app.dsh.mobile.MaxWidthLinearLayout>
+    </ScrollView>
+
+    <!-- v1.6.45：吸顶标题条。不透明底 + 只含一个 20sp 小标题，大小标题之间
+         只做 alpha 交叉淡化（无 scale，故无字形重栅格化）。详见 CollapsingTitleBar。 -->
+    <app.dsh.mobile.ui.CollapsingTitleBar
+        android:id="@+id/settingsTitleBar"
+        android:layout_width="match_parent"
+        android:layout_height="62dp" />
+
+    <FrameLayout
+        android:id="@+id/searchOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/settings_page_bg"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+                android:foreground="?android:attr/selectableItemBackground" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <!-- v1.6.38：搜索栏行。整行加 id 作为“起飞锚点”——
+                 打开搜索时它从首页搜索栏的屏幕位置平移到顶部（同 preview 里搜索框的纵向位移量）。 -->
+            <LinearLayout
+                android:id="@+id/searchBarWrap"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="@dimen/space_16"
+                android:paddingTop="@dimen/space_8"
+                android:paddingEnd="@dimen/space_8">
+
+                <LinearLayout
+                    android:id="@+id/searchBarInline"
+                    android:layout_width="0dp"
+                    android:layout_height="43dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_settings_search"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="@dimen/space_12"
+                    android:paddingEnd="@dimen/space_8">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_search"
+                        android:tint="@color/settings_text_secondary" />
+
+                    <EditText
+                        android:id="@+id/searchInput"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="@dimen/space_8"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="@string/settings_search_hint"
+                        android:imeOptions="actionSearch"
+                        android:inputType="text"
+                        android:maxLines="1"
+                        android:singleLine="true"
+                        android:textColor="@color/settings_text_primary"
+                        android:textColorHint="@color/settings_text_secondary"
+                        android:textSize="@dimen/text_title" />
+
+                    <ImageView
+                        android:id="@+id/btnSearchClear"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:padding="@dimen/space_2"
+                        android:src="@drawable/ic_close"
+                        android:tint="@color/settings_text_secondary"
+                        android:visibility="gone" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/btnSearchCancel"
+                    android:layout_width="50dp"
+                    android:layout_height="43dp"
+                    android:gravity="center"
+                    android:text="@string/settings_cancel"
+                    android:textColor="@color/icon_blue"
+                    android:textSize="@dimen/text_title" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/searchSuggestions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="@dimen/space_16"
+                android:paddingTop="@dimen/space_18">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_search_suggestions"
+                    android:textColor="@color/settings_text_primary"
+                    android:textSize="@dimen/text_title"
+                    android:textStyle="bold" />
+                <LinearLayout
+                    android:id="@+id/searchChips"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_10"
+                    android:orientation="vertical" />
+            </LinearLayout>
+
+            <ScrollView
+                android:id="@+id/searchResultsScroll"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:fillViewport="true">
+                <LinearLayout
+                    android:id="@+id/searchResults"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="@dimen/space_16"
+                    android:paddingTop="@dimen/space_12"
+                    android:paddingBottom="@dimen/space_32" />
+            </ScrollView>
+        </LinearLayout>
+    </FrameLayout>
+</FrameLayout>

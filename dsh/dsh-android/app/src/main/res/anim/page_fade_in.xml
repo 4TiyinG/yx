@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 精简动效档的进场（v1.6.45）：只淡入，不做横向位移。
+     省掉的是"整屏 surface 的横向平移合成"——低端机上这一层最贵。 -->
+<alpha xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="200"
+    android:fromAlpha="0.94"
+    android:interpolator="@android:anim/decelerate_interpolator"
+    android:toAlpha="1" />

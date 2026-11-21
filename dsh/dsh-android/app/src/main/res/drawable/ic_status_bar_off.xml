@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  隐藏状态栏 / 全屏沉浸（v1.6.50，灵动岛专用）
+
+  ## 语义
+  「状态栏此刻是**隐藏**的」→ 点它会把状态栏放回来。
+
+  ## 与 ic_status_bar_on 的区分（三重独立线索，任一条失效仍可分辨）
+   ① 字形：本图标在同一个顶栏外框上**划一道斜杠**（"没有这一条"）；
+   ② 内部：没有时间/电池块，替成两条更宽的正文行（"内容占满到顶"）；
+   ③ 着色：调用点给隐藏态用主色（island_accent），显示态用中性色（island_text）。
+  外框与 on 态逐点一致，所以切换时只有"里面变了"，形状不跳。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- 顶栏外框（与 on 态相同） -->
+    <path
+        android:fillColor="@color/icon_color"
+        android:pathData="M2,3h20v2H2zM2,5h2v5H2zM20,5h2v5h-2zM2,10h20v0.001H2z" />
+    <!-- 内部：不再有状态块，改成内容行（读作"内容顶到最上面"） -->
+    <path
+        android:fillColor="@color/icon_color"
+        android:pathData="M4,13.5h16v1.6H4zM4,17.5h11v1.6H4z" />
+    <!-- 斜杠：一条从右上到左下的粗线，压在框上（"这条被关掉了"） -->
+    <path
+        android:fillColor="@color/icon_color"
+        android:pathData="M3.41,4.41L19.59,20.59l1.41,-1.41L4.83,3z" />
+</vector>

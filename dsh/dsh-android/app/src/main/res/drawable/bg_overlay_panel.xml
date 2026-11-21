@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 悬浮窗背景（无障碍悬浮球展开态）。
+     v1.6.34：与顶部灵动岛（bg_dynamic_island）统一为同一套半透明底色 + 细描边，
+     两者观感一致（island_bg 现为 90% 不透明），不再一个实心、一个近实心。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/island_bg" />
+    <corners android:radius="@dimen/radius_m" />
+    <stroke android:width="0.5dp" android:color="@color/island_stroke" />
+</shape>

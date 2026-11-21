@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 浅色主题（默认深色由 ThemePref 强制；SYSTEM 时跟随系统） -->
+    <color name="bg">#FFF5F7FA</color>
+    <color name="surface">#FFFFFFFF</color>
+    <color name="surface_alt">#FFF0F3F7</color>
+    <color name="surface_high">#FFFFFFFF</color>
+    <color name="toolbar">#FFFFFFFF</color>
+    <color name="dialog_bg">#FFFFFFFF</color>
+    <color name="text_primary">#FF0F172A</color>
+    <color name="text_secondary">#FF475569</color>
+    <color name="text_muted">#FF7C8798</color>
+    <color name="accent">#FF0284C7</color>
+    <color name="accent_soft">#FFE0F2FE</color>
+    <color name="accent_alt">#FF7C3AED</color>
+    <color name="on_accent">#FFFFFFFF</color>
+    <color name="divider">#FFE2E8F0</color>
+    <color name="stroke">#FFCBD5E1</color>
+    <color name="overlay">#66000000</color>
+    <color name="danger">#FFDC2626</color>
+    <color name="success">#FF15803D</color>
+    <color name="warning">#FFB45309</color>
+    <!-- 状态徽章软底（v1.4.45）：底色柔和、文字用上方实色，明暗主题都可读 -->
+    <color name="success_soft">#FFE8F5EC</color>
+    <color name="warning_soft">#FFFDF3E1</color>
+    <color name="danger_soft">#FFFDEBEA</color>
+    <color name="icon_color">#FF334155</color>
+    <color name="splash_start">#FFF8FBFF</color>
+    <color name="splash_mid">#FFEEF4FB</color>
+    <color name="splash_end">#FFE4EBF3</color>
+    <color name="splash_card">#FFFFFFFF</color>
+    <color name="splash_logo_start">#FF0EA5E9</color>
+    <color name="splash_logo_end">#FF0369A1</color>
+    <!-- 径向光晕与顶部高光（v1.6.14）：给遮罩一点纵深，不要平铺一块色 -->
+    <color name="splash_glow">#2E38BDF8</color>
+    <!-- 运行模式徽章底色 -->
+    <color name="splash_mode_native">#14F59E0B</color>
+    <color name="splash_mode_linux">#1410B981</color>
+    <color name="splash_pill">#FFE0F2FE</color>
+
+    <!-- 灵动岛（顶部悬浮胶囊）：底色与前景色**成对**随主题切换。
+         亮色主题下岛改为浅灰表面 —— 纯白（#FFFFFF）贴在白色页面上会与背景糊成一片，
+         顶部那条"引擎已就绪"几乎看不出边界；改用带灰度的 #F2F3F5 并加深描边，
+         既保持亮色观感，又能和白色内容区分开。
+         前景色同步换深色系：旧的那组浅亮色（#9CA3AF / #7DD3FC / #6EE7B7）是照着
+         恒黑底选的，画在浅底上几乎看不见。values-night 给回深底 + 亮前景的那一组。 -->
+    <!-- v1.6.34：悬浮窗统一半透明。旧值 #F7（97% 不透明）几乎等同于实心块，
+         压在网页上像一条硬边黑/白条。改为 #E6（90%）：仍保证文字对比度，
+         又能透出底下的页面内容，与无障碍悬浮球（bg_overlay_panel）统一同一底色与透明度。 -->
+    <color name="island_bg">#E6F2F3F5</color>
+    <color name="island_stroke">#330F172A</color>
+    <color name="island_ripple">#2E0F172A</color>
+    <color name="island_ring_soft">#140F172A</color>
+    <color name="island_ring_stroke">#330F172A</color>
+    <color name="island_core">#590F172A</color>
+    <color name="island_text">#FF475569</color>
+    <color name="island_accent">#FF0284C7</color>
+    <color name="island_success">#FF15803D</color>
+    <!-- v1.6.47：灵动岛「重活」色（重启/启动引擎）。
+         为什么要单独一个色：重启与刷新原来同色同形，胶囊上像两枚复制品。
+         追上语义之后——蓝=轻（刷新/终端），琥珀=重（会中断当前会话）——
+         用户扫一眼就能判断哪个是"点下去会断一下"的。浅底用 amber-700（#B45309，
+         对 #F2F3F5 底对比约 5.3:1，过 AA）；深底在 values-night 用 amber-400。 -->
+    <color name="island_warn">#FFB45309</color>
+    <color name="island_muted">#FF7C8798</color>
+    <color name="island_handle">#FFCBD5E1</color>
+    <!-- 按钮按压涟漪（亮色：淡墨） -->
+    <color name="btn_ripple">#1F0F172A</color>
+
+    <!-- 启动页专用文字与线条（v1.6.19）：与主界面配色解耦，避免受 accent 主题牵着走 -->
+    <color name="splash_text">#FF272E2B</color>
+    <color name="splash_text_secondary">#FF626B65</color>
+    <color name="splash_text_muted">#FF8A938C</color>
+    <color name="splash_accent">#FF4F6C5E</color>
+    <color name="splash_track">#1A4F6C5E</color>
+    <color name="splash_rule">#232D3B32</color>
+    <color name="splash_mode_pending">#12626B65</color>
+    <color name="splash_mode_native_tint">#FF856133</color>
+    <color name="splash_mode_linux_tint">#FF3D6C55</color>
+    <color name="splash_failure">#FFA73E36</color>
+
+    <!-- 设置页参考图设计令牌（realme UI 风格：灰底 + 白色圆角卡片 + 彩色圆形图标） -->
+    <color name="settings_page_bg">#FFEFF0F3</color>
+    <color name="settings_card_bg">#FFFFFFFF</color>
+    <color name="settings_search_bg">#FFDFE0E3</color>
+    <color name="settings_divider">#FFEFEFEF</color>
+    <color name="settings_text_primary">#FF17171A</color>
+    <color name="settings_text_secondary">#FF8E8F92</color>
+    <color name="settings_value">#FF9A9A9E</color>
+    <color name="settings_chevron">#FFC6C6CB</color>
+    <color name="switch_track_off">#FFD8D8DC</color>
+    <color name="switch_track_on">#FF0A84FF</color>
+    <color name="switch_thumb">#FFFFFFFF</color>
+    <color name="icon_blue">#FF0066FE</color>
+    <color name="icon_green">#FF00BD15</color>
+    <color name="icon_orange">#FFFE7400</color>
+    <color name="icon_yellow">#FFFFAF00</color>
+    <color name="icon_red">#FFE5484D</color>
+    <color name="icon_gray">#FF8E8F92</color>
+    <color name="icon_purple">#FF7B61FF</color>
+    <color name="icon_teal">#FF00BDD6</color>
+    <color name="icon_pink">#FFF0484F</color>
+
+    <!-- 控制台（终端 / 日志查看器）：成对定义底色与前景色。
+         重构前这两页各自硬编码了 4 组深色（#FF101418 / #FF0D1117 两种底，
+         #FF9AA5B4 / #FF8A94A3 / #FF6B7684 / #FF7DD3FC / #FFC9D4E0 五种前景），
+         连"同一个视觉系统"的两个页面都不一致。这里收敛成一套，并让浅色主题
+         也有可读的浅色控制台 —— 否则浅色用户点进终端会突然掉进一块黑板。 -->
+    <color name="console_bg">#FFF7F8FA</color>
+    <color name="console_surface">#FFFFFFFF</color>
+    <color name="console_text">#FF1F2933</color>
+    <color name="console_text_dim">#FF6B7684</color>
+    <color name="console_text_faint">#FF9AA5B4</color>
+    <color name="console_accent">#FF0369A1</color>
+    <color name="console_divider">#FFE2E8F0</color>
+
+    <!-- 彩色图标底（bg_icon_circle_* / icon_blue / icon_green…）上面的前景色。
+         与 on_accent 不同：这些底色是固定的品牌色，两套主题下都偏深，
+         所以前景恒为白 —— 不能跟随 accent 反转，否则深色主题下会变成深字压深底。 -->
+    <color name="on_chip">#FFFFFFFF</color>
+    <color name="on_chip_dim">#D9FFFFFF</color>
+</resources>

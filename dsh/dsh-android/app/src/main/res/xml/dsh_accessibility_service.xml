@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 无障碍服务声明：手势注入（模拟点击/滑动/长按）+ 屏幕截图（API 30+，
+     canTakeScreenshot 需用户重新开启服务后生效）+ 读取屏幕内容。
+     canPerformGestures 是模拟点击的关键 flag，Android 8+ 可用。 -->
+<!-- v1.6.49：事件面从 typeAllMask 收窄到「onAccessibilityEvent 真正处理的 5 类」。
+         typeAllMask 等于向 system_server 订阅**全设备全类型**事件：CONTENT_CHANGED
+         在本应用自己的 WebView 页面里每秒上百条，每一条都要跨进程派发进本进程，
+         再在 onAccessibilityEvent（主线程）里穿过一个 when 分支后被丢弃 ——
+         收进来再扔掉，纯纯的浪费。收窄后不订阅的事件连 IPC 都不会发生。
+         notificationTimeout 100→200ms：系统侧的合并窗口翻倍，派发频率再降一半
+         （本服务对事件的用途只有「记录最近触摸/窗口/通知」与文本变化摘要，
+         200ms 的粒度完全够用）。 -->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/accessibility_desc"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged|typeNotificationStateChanged|typeTouchInteractionStart|typeTouchInteractionEnd"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:notificationTimeout="200"
+    android:canRetrieveWindowContent="true"
+    android:canPerformGestures="true"
+    android:canTakeScreenshot="true"
+    android:accessibilityFlags="flagDefault" />

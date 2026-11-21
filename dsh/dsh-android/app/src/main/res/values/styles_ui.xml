@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  共享组件样式（v1.6.44）—— 所有原生页面的按钮 / 卡片 / 工具条 / 列表行 / 弹窗
+  都从这里取样式，不再各页手搓。
+
+  ## 命名约定
+
+  · `TextAppearance.Dsh.*`  只管字：字号 + 字重 + 颜色
+  · `Widget.Dsh.*`          只管盒子：尺寸 + 内边距 + 背景 + 按压反馈
+
+  两者分开，是因为同一个盒子在不同场景要用不同字重（卡片标题 16sp bold、
+  列表行标题 16sp medium、说明 13sp normal），合在一起就得为每种组合建一个样式。
+
+  ## 为什么 layout_* 也写进 style
+
+  `Widget.Dsh.ToolbarTitle` 里的 `layout_weight` / `layout_height` 只有在
+  LinearLayout 父容器下才有意义 —— 本项目所有工具条都是横向 LinearLayout，
+  所以安全。这样工具条标题的"占满剩余宽度"就不会被某个页面漏写而导致标题只剩
+  一半宽（原来 activity_settings.xml 就漏过）。
+-->
+<resources>
+
+    <!-- 两个命名空间的根：Android 会把 `A.B.C` 隐式解析成继承 `A.B`，
+         根不存在就会在链接阶段报 "resource style/Widget.Dsh not found"。
+         这里显式给空根，既保留点分命名，也不会误继承系统样式。 -->
+    <style name="TextAppearance.Dsh" parent="" />
+    <style name="Widget.Dsh" parent="" />
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         一、字
+         ══════════════════════════════════════════════════════════════════ -->
+    <style name="TextAppearance.Dsh.Caption">
+        <item name="android:textSize">@dimen/text_caption</item>
+        <item name="android:textColor">@color/text_muted</item>
+    </style>
+
+    <style name="TextAppearance.Dsh.Footnote">
+        <item name="android:textSize">@dimen/text_footnote</item>
+        <item name="android:textColor">@color/text_secondary</item>
+    </style>
+
+    <style name="TextAppearance.Dsh.BodySmall">
+        <item name="android:textSize">@dimen/text_body_s</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <style name="TextAppearance.Dsh.Body">
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <style name="TextAppearance.Dsh.BodyLarge">
+        <item name="android:textSize">@dimen/text_body_l</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <!-- 卡片标题 / 行标题 -->
+    <style name="TextAppearance.Dsh.Title">
+        <item name="android:textSize">@dimen/text_title</item>
+        <item name="android:textColor">@color/settings_text_primary</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <!-- 工具条标题 / 页面主标题 -->
+    <style name="TextAppearance.Dsh.TitleLarge">
+        <item name="android:textSize">@dimen/text_title_l</item>
+        <item name="android:textColor">@color/settings_text_primary</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.Dsh.Headline">
+        <item name="android:textSize">@dimen/text_headline</item>
+        <item name="android:textColor">@color/settings_text_primary</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         二、工具条（19 处工具条此前是逐字节复制的手搓代码）
+         ══════════════════════════════════════════════════════════════════ -->
+    <style name="Widget.Dsh.Toolbar">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/toolbar_height</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:background">@color/settings_page_bg</item>
+        <item name="android:elevation">@dimen/elevation_toolbar</item>
+    </style>
+
+    <!-- 引擎系页面（文件编辑器 / 插件商店 / 更新设置）的根背景是 @color/bg，
+         工具条必须同色，否则滚动内容会从工具条底下透出来与标题撞在一起。 -->
+    <style name="Widget.Dsh.Toolbar.Bg">
+        <item name="android:background">@color/bg</item>
+    </style>
+
+    <style name="Widget.Dsh.ToolbarTitle">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:textSize">@dimen/text_title_l</item>
+        <item name="android:textColor">@color/settings_text_primary</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- 工具条上的图标按钮：48dp 触控目标 + 无边界涟漪。
+         尺寸必须命中 @dimen/touch_target，低于 48dp 在无障碍扫描里算不合格。 -->
+    <style name="Widget.Dsh.ToolbarIcon">
+        <item name="android:layout_width">@dimen/touch_target</item>
+        <item name="android:layout_height">@dimen/touch_target</item>
+        <item name="android:padding">@dimen/space_12</item>
+        <item name="android:background">?android:attr/selectableItemBackgroundBorderless</item>
+        <item name="android:scaleType">centerInside</item>
+    </style>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         三、卡片与列表
+         ══════════════════════════════════════════════════════════════════ -->
+    <style name="Widget.Dsh.Card">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:background">@drawable/bg_settings_card</item>
+        <item name="android:clipToOutline">true</item>
+    </style>
+
+    <style name="Widget.Dsh.Row">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:background">?android:attr/selectableItemBackground</item>
+        <item name="android:paddingStart">@dimen/row_padding_h</item>
+        <item name="android:paddingEnd">@dimen/row_padding_h</item>
+        <item name="android:paddingTop">@dimen/row_padding_v</item>
+        <item name="android:paddingBottom">@dimen/row_padding_v</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+
+    <!-- 分隔线：左侧让开图标宽度（与行内文字对齐），右侧贴卡片内边距 -->
+    <style name="Widget.Dsh.Divider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/stroke_hairline</item>
+        <item name="android:layout_marginStart">@dimen/row_text_indent</item>
+        <item name="android:layout_marginEnd">@dimen/row_padding_h</item>
+        <item name="android:background">@color/settings_divider</item>
+    </style>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         四、按钮
+         三种形态：主（实心强调色）/ 次（描边）/ 文字（无底）。
+         统一 16dp 圆角、14dp 纵向内边距、bold 14sp —— 原来这四项在
+         各页面分别是 10/12/14/16 圆角、12-16dp 内边距、13-16sp 字号。
+         ══════════════════════════════════════════════════════════════════ -->
+    <style name="Widget.Dsh.Button">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">@dimen/touch_target</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingStart">@dimen/space_20</item>
+        <item name="android:paddingEnd">@dimen/space_20</item>
+        <item name="android:paddingTop">@dimen/space_14</item>
+        <item name="android:paddingBottom">@dimen/space_14</item>
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:stateListAnimator">@animator/press_scale</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+
+    <style name="Widget.Dsh.Button.Primary">
+        <item name="android:background">@drawable/bg_btn_accent_ripple</item>
+        <item name="android:textColor">@color/on_accent</item>
+    </style>
+
+    <style name="Widget.Dsh.Button.Secondary">
+        <item name="android:background">@drawable/bg_btn_outline_ripple</item>
+        <item name="android:textColor">@color/accent</item>
+    </style>
+
+    <style name="Widget.Dsh.Button.Ghost">
+        <item name="android:background">?android:attr/selectableItemBackground</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:paddingStart">@dimen/space_12</item>
+        <item name="android:paddingEnd">@dimen/space_12</item>
+    </style>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         五、弹窗
+         ══════════════════════════════════════════════════════════════════ -->
+    <style name="Widget.Dsh.Dialog" parent="@style/Theme.Dsh.Dialog">
+        <item name="android:windowAnimationStyle">@style/SettingsDialogAnimation</item>
+        <!-- 弹窗不吃界面的最大宽度：横屏/折叠屏展开时按屏幕宽走，但留出边距 -->
+        <item name="android:windowMinWidthMajor">42%</item>
+        <item name="android:windowMinWidthMinor">64%</item>
+    </style>
+
+</resources>

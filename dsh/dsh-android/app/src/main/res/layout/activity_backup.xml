@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/settings_page_bg">
+
+    <LinearLayout style="@style/Widget.Dsh.Toolbar">
+
+        <ImageView
+            android:id="@+id/btnBack"
+            style="@style/Widget.Dsh.ToolbarIcon"
+            android:src="@drawable/ic_back"
+            android:contentDescription="@string/settings_back" />
+
+        <TextView
+            style="@style/Widget.Dsh.ToolbarTitle"
+            android:text="@string/setting_backup" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <app.dsh.mobile.MaxWidthLinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/space_16"
+            android:paddingBottom="@dimen/space_32">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_settings_card"
+                android:layout_marginTop="@dimen/space_14">
+
+
+<LinearLayout
+                    android:id="@+id/rowExportData"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="@dimen/space_16"
+                    android:paddingVertical="@dimen/space_14"
+                    android:background="?android:attr/selectableItemBackground">
+
+                    <FrameLayout
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:background="@drawable/bg_icon_circle_gray"
+                        >
+                        <ImageView
+                            android:layout_width="19dp"
+                            android:layout_height="19dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_export"
+                            android:tint="@color/on_chip" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="@dimen/space_14">
+
+                    <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setting_export_data"
+                    android:textColor="@color/settings_text_primary"
+                    android:textSize="@dimen/text_title" />
+
+                    <TextView
+                    android:id="@+id/txtExportSub"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setting_export_data_sub"
+                    android:textColor="@color/settings_text_secondary"
+                    android:textSize="@dimen/text_footnote"
+                    android:layout_marginTop="@dimen/space_2" />
+                    </LinearLayout>
+
+                                        <TextView
+                    android:id="@+id/btnExport"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/action_export"
+                    android:textColor="@color/accent"
+                    android:textSize="@dimen/text_footnote"
+                    android:background="@drawable/bg_btn_outline"
+                    android:paddingHorizontal="@dimen/space_14"
+                    android:paddingVertical="@dimen/space_8"
+                    android:layout_marginStart="@dimen/space_10" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginStart="@dimen/space_16"
+                        android:background="@color/settings_divider" />
+
+<LinearLayout
+                    android:id="@+id/rowImportData"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="@dimen/space_16"
+                    android:paddingVertical="@dimen/space_14"
+                    android:background="?android:attr/selectableItemBackground">
+
+                    <FrameLayout
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:background="@drawable/bg_icon_circle_green"
+                        >
+                        <ImageView
+                            android:layout_width="19dp"
+                            android:layout_height="19dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_restore"
+                            android:tint="@color/on_chip" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="@dimen/space_14">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/setting_import_data"
+                            android:textColor="@color/settings_text_primary"
+                            android:textSize="@dimen/text_body_l" />
+
+                        <TextView
+                            android:id="@+id/txtImportSub"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/setting_import_data_sub"
+                            android:textColor="@color/settings_text_secondary"
+                            android:textSize="@dimen/text_footnote"
+                            android:layout_marginTop="@dimen/space_2" />
+                    </LinearLayout>
+
+                                        <TextView
+                    android:id="@+id/btnImport"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/action_import"
+                    android:textColor="@color/accent"
+                    android:textSize="@dimen/text_footnote"
+                    android:background="@drawable/bg_btn_outline"
+                    android:paddingHorizontal="@dimen/space_14"
+                    android:paddingVertical="@dimen/space_8"
+                    android:layout_marginStart="@dimen/space_10" />
+                </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginStart="@dimen/space_16"
+                        android:background="@color/settings_divider" />
+
+<LinearLayout
+                    android:id="@+id/rowRecoverChats"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="@dimen/space_16"
+                    android:paddingVertical="@dimen/space_14"
+                    android:background="?android:attr/selectableItemBackground">
+
+                    <FrameLayout
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:background="@drawable/bg_icon_circle_green"
+                        >
+                        <ImageView
+                            android:layout_width="19dp"
+                            android:layout_height="19dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_restore"
+                            android:tint="@color/on_chip" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="@dimen/space_14">
+
+                    <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setting_recover_chats"
+                    android:textColor="@color/settings_text_primary"
+                    android:textSize="@dimen/text_title" />
+
+                    <TextView
+                    android:id="@+id/txtRecoverSub"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setting_recover_chats_sub"
+                    android:textColor="@color/settings_text_secondary"
+                    android:textSize="@dimen/text_footnote"
+                    android:layout_marginTop="@dimen/space_2" />
+                    </LinearLayout>
+
+                                        <TextView
+                    android:id="@+id/btnRecover"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/action_recover"
+                    android:textColor="@color/accent"
+                    android:textSize="@dimen/text_footnote"
+                    android:background="@drawable/bg_btn_outline"
+                    android:paddingHorizontal="@dimen/space_14"
+                    android:paddingVertical="@dimen/space_8"
+                    android:layout_marginStart="@dimen/space_10" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginStart="@dimen/space_16"
+                        android:background="@color/settings_divider" />
+
+<LinearLayout
+                    android:id="@+id/rowConfigFiles"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="@dimen/space_16"
+                    android:paddingVertical="@dimen/space_14"
+                    android:background="?android:attr/selectableItemBackground">
+
+                    <FrameLayout
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:background="@drawable/bg_icon_circle_gray"
+                        >
+                        <ImageView
+                            android:layout_width="19dp"
+                            android:layout_height="19dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_log"
+                            android:tint="@color/on_chip" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="@dimen/space_14">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/setting_config_files"
+                            android:textColor="@color/settings_text_primary"
+                            android:textSize="@dimen/text_body_l" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/setting_config_files_sub"
+                            android:textColor="@color/settings_text_secondary"
+                            android:textSize="@dimen/text_footnote"
+                            android:layout_marginTop="@dimen/space_2" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </app.dsh.mobile.MaxWidthLinearLayout>
+    </ScrollView>
+</LinearLayout>

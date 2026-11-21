@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  浅色预览卡 · 选中态（v1.6.22）
+
+  在原有预览图上叠一圈 2dp 强调色描边，颜色与下方选中圆点完全相同
+  （@color/icon_blue），让「卡片描边 + 圆点」读成同一套选中标记，
+  而不是两种互不相干的提示。
+
+  描边项内缩 1dp：2dp 的 stroke 以路径为中心绘制，内缩后外沿正好落在
+  视图边界上，四边都不会被 View 裁掉半条线；圆角同步减 1dp 才能与
+  卡片的 13dp 圆角严丝合缝。
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:drawable="@drawable/bg_theme_preview_light" />
+
+    <item
+        android:bottom="1dp"
+        android:left="1dp"
+        android:right="1dp"
+        android:top="1dp">
+        <shape android:shape="rectangle">
+            <stroke
+                android:width="2dp"
+                android:color="@color/icon_blue" />
+            <corners android:radius="@dimen/radius_s" />
+            <solid android:color="@android:color/transparent" />
+        </shape>
+    </item>
+</layer-list>

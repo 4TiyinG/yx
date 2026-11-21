@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  v1.6.27：供 View.setTag(int, Object) 使用的资源 id。
+
+  Android 的 setTag(key, value) 需要一个**已声明的资源 id** 作为键，
+  不能直接用任意 int（否则不同 View 之间会撞键）。放在 ids.xml 里声明
+  是官方推荐做法，比为一个「贴纸位图版本号」新造一个 View 子类轻得多。
+
+  当前用途：
+  · stickerBitmapKey —— 状态栏贴纸 ImageView 上记录「当前位图对应的文件版本」，
+    值形如 `<path>|<mtime>|<bytes>`。相同则不重新解码，直接复用已有位图。
+-->
+<resources>
+    <item name="stickerBitmapKey" type="id" />
+</resources>

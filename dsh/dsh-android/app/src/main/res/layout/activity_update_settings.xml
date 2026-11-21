@@ -1,0 +1,500 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg">
+
+    <LinearLayout style="@style/Widget.Dsh.Toolbar.Bg">
+
+        <ImageView
+            android:id="@+id/btnBack"
+            style="@style/Widget.Dsh.ToolbarIcon"
+            android:src="@drawable/ic_back"
+            android:contentDescription="@string/settings_back" />
+
+        <TextView
+            style="@style/Widget.Dsh.ToolbarTitle"
+            android:text="@string/settings_update_group" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <app.dsh.mobile.MaxWidthLinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/space_16"
+            android:paddingBottom="@dimen/space_32">
+
+            <!-- 应用更新状态卡（v1.4.58）：与关于页共用同一套状态机（UpdateStatusCard）。
+                 主按钮随状态变化（检查/下载/安装/重试），次按钮（前往 Release/删除安装包）。 -->
+            <LinearLayout
+                android:id="@+id/rowUpdate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="@dimen/space_16"
+                android:paddingVertical="@dimen/space_14"
+                android:layout_marginTop="@dimen/space_14"
+                android:background="@drawable/bg_card"
+                android:clickable="true"
+                android:focusable="true"
+                android:stateListAnimator="@animator/press_scale" >
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_update_group"
+                        android:textColor="@color/text_primary"
+                        android:textSize="@dimen/text_body_l" />
+
+                    <TextView
+                        android:id="@+id/txtUpdate"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/about_update_idle"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="@dimen/text_body_s"
+                        android:layout_marginTop="@dimen/space_2" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="end"
+                    android:layout_marginStart="@dimen/space_10">
+
+                    <TextView
+                        android:id="@+id/btnUpdatePrimary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingHorizontal="@dimen/space_12"
+                        android:paddingVertical="@dimen/space_6"
+                        android:background="@drawable/bg_btn_outline"
+                        android:text="@string/about_check_update"
+                        android:textColor="@color/accent"
+                        android:textSize="@dimen/text_body_s"
+                        android:clickable="true"
+                        android:focusable="true"
+                android:stateListAnimator="@animator/press_scale" />
+
+                    <TextView
+                        android:id="@+id/btnUpdateSecondary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingHorizontal="@dimen/space_12"
+                        android:paddingVertical="@dimen/space_6"
+                        android:layout_marginTop="@dimen/space_6"
+                        android:background="@drawable/bg_btn_outline"
+                        android:text="@string/about_update_release"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="@dimen/text_footnote"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:visibility="gone"
+                android:stateListAnimator="@animator/press_scale" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 运行时更新（v1.4.58 自关于页迁入）：拉起 RuntimeUpdateService，进度看通知栏 -->
+            <LinearLayout
+                android:id="@+id/rowRuntime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="@dimen/space_16"
+                android:paddingVertical="@dimen/space_14"
+                android:layout_marginTop="@dimen/space_14"
+                android:background="@drawable/bg_card"
+                android:clickable="true"
+                android:focusable="true"
+                android:stateListAnimator="@animator/press_scale" >
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/about_runtime"
+                        android:textColor="@color/text_primary"
+                        android:textSize="@dimen/text_body_l" />
+
+                    <TextView
+                        android:id="@+id/txtRuntime"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/about_runtime_idle"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="@dimen/text_body_s"
+                        android:layout_marginTop="@dimen/space_2" />
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_chevron" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_update_prefs_header"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_footnote"
+                android:layout_marginTop="@dimen/space_18"
+                android:layout_marginStart="@dimen/space_4" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_card"
+                android:layout_marginTop="@dimen/space_8">
+
+
+<LinearLayout
+                    android:id="@+id/rowUpdateAutoCheck"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="@dimen/space_16"
+                    android:paddingVertical="@dimen/space_14"
+                    android:background="?android:attr/selectableItemBackground">
+
+                    <ImageView
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:padding="@dimen/space_8"
+                    android:src="@drawable/ic_rotate"
+                    android:background="@drawable/bg_icon_chip_soft"
+                    android:tint="@color/accent" />
+
+                    <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="@dimen/space_14">
+
+                    <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_update_auto_check"
+                    android:textColor="@color/text_primary"
+                    android:textSize="@dimen/text_title" />
+
+                    <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_update_auto_check_desc"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_footnote"
+                    android:layout_marginTop="@dimen/space_2" />
+                    </LinearLayout>
+
+                    <Switch
+                    android:id="@+id/swUpdateAutoCheck"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/space_10" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginStart="@dimen/space_16"
+                        android:background="@color/divider" />
+
+<LinearLayout
+                    android:id="@+id/rowUpdateWifiOnly"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="@dimen/space_16"
+                    android:paddingVertical="@dimen/space_14"
+                    android:background="?android:attr/selectableItemBackground">
+
+                    <ImageView
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:padding="@dimen/space_8"
+                    android:src="@drawable/ic_lan"
+                    android:background="@drawable/bg_icon_chip_soft"
+                    android:tint="@color/success" />
+
+                    <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="@dimen/space_14">
+
+                    <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_update_wifi_only"
+                    android:textColor="@color/text_primary"
+                    android:textSize="@dimen/text_title" />
+
+                    <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_update_wifi_only_desc"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_footnote"
+                    android:layout_marginTop="@dimen/space_2" />
+                    </LinearLayout>
+
+                    <Switch
+                    android:id="@+id/swUpdateWifiOnly"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/space_10" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginStart="@dimen/space_16"
+                        android:background="@color/divider" />
+
+<LinearLayout
+                    android:id="@+id/rowUpdateIndexProxy"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="@dimen/space_16"
+                    android:paddingVertical="@dimen/space_14"
+                    android:background="?android:attr/selectableItemBackground">
+
+                    <ImageView
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:padding="@dimen/space_8"
+                    android:src="@drawable/ic_download"
+                    android:background="@drawable/bg_icon_chip_soft"
+                    android:tint="@color/accent" />
+
+                    <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="@dimen/space_14">
+
+                    <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_update_proxy_fallback"
+                    android:textColor="@color/text_primary"
+                    android:textSize="@dimen/text_title" />
+
+                    <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_update_proxy_fallback_desc"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_footnote"
+                    android:layout_marginTop="@dimen/space_2" />
+                    </LinearLayout>
+
+                    <Switch
+                    android:id="@+id/swUpdateIndexProxy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/space_10" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginStart="@dimen/space_16"
+                        android:background="@color/divider" />
+
+<LinearLayout
+                    android:id="@+id/rowUpdateStrategy"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="@dimen/space_16"
+                    android:paddingVertical="@dimen/space_14"
+                    android:background="?android:attr/selectableItemBackground">
+
+                    <ImageView
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:padding="@dimen/space_8"
+                    android:src="@drawable/ic_package"
+                    android:background="@drawable/bg_icon_chip_soft"
+                    android:tint="@color/text_secondary" />
+
+                    <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="@dimen/space_14">
+
+                    <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_update_strategy"
+                    android:textColor="@color/text_primary"
+                    android:textSize="@dimen/text_title" />
+
+                    <TextView
+                    android:id="@+id/subUpdateStrategy"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_update_strategy_desc"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_footnote"
+                    android:layout_marginTop="@dimen/space_2" />
+                    </LinearLayout>
+
+                    <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_chevron" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginStart="@dimen/space_16"
+                        android:background="@color/divider" />
+
+<LinearLayout
+                    android:id="@+id/rowUpdateIgnored"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="@dimen/space_16"
+                    android:paddingVertical="@dimen/space_14"
+                    android:background="?android:attr/selectableItemBackground">
+
+                    <ImageView
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:padding="@dimen/space_8"
+                    android:src="@drawable/ic_info"
+                    android:background="@drawable/bg_icon_chip_soft"
+                    android:tint="@color/text_secondary" />
+
+                    <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="@dimen/space_14">
+
+                    <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_update_ignored"
+                    android:textColor="@color/text_primary"
+                    android:textSize="@dimen/text_title" />
+
+                    <TextView
+                    android:id="@+id/subUpdateIgnored"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_update_ignored_none"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_footnote"
+                    android:layout_marginTop="@dimen/space_2" />
+                    </LinearLayout>
+
+                    <TextView
+                    android:id="@+id/btnUpdateIgnoredClear"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="@dimen/space_12"
+                    android:paddingVertical="@dimen/space_6"
+                    android:background="@drawable/bg_btn_outline"
+                    android:text="@string/settings_update_clear"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_footnote"
+                    android:visibility="gone" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginStart="@dimen/space_16"
+                        android:background="@color/divider" />
+
+<LinearLayout
+                    android:id="@+id/rowUpdateCheckNow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="@dimen/space_16"
+                    android:paddingVertical="@dimen/space_14"
+                    android:background="?android:attr/selectableItemBackground">
+
+                    <ImageView
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:padding="@dimen/space_8"
+                    android:src="@drawable/ic_restart"
+                    android:background="@drawable/bg_icon_chip_soft"
+                    android:tint="@color/success" />
+
+                    <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="@dimen/space_14">
+
+                    <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_update_check_now"
+                    android:textColor="@color/text_primary"
+                    android:textSize="@dimen/text_title" />
+
+                    <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_update_check_now_desc"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_footnote"
+                    android:layout_marginTop="@dimen/space_2" />
+                    </LinearLayout>
+
+                    <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_chevron" />
+                    </LinearLayout>
+
+            </LinearLayout>
+        </app.dsh.mobile.MaxWidthLinearLayout>
+    </ScrollView>
+</LinearLayout>

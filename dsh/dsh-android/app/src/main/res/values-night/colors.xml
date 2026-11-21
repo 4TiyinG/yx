@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 深色主题：保持 v1.4.19 的视觉 -->
+    <color name="bg">#FF101418</color>
+    <color name="surface">#FF161D29</color>
+    <color name="surface_alt">#FF1B2330</color>
+    <color name="surface_high">#FF1D232B</color>
+    <color name="toolbar">#FF101418</color>
+    <color name="dialog_bg">#FF1D232B</color>
+    <color name="text_primary">#FFF2F5F9</color>
+    <color name="text_secondary">#FF9CA3AF</color>
+    <color name="text_muted">#FF6B7684</color>
+    <color name="accent">#FF7DD3FC</color>
+    <color name="accent_soft">#1F7DD3FC</color>
+    <color name="accent_alt">#FFA78BFA</color>
+    <color name="on_accent">#FF0B1116</color>
+    <color name="divider">#22FFFFFF</color>
+    <color name="stroke">#26FFFFFF</color>
+    <color name="overlay">#B31A2028</color>
+    <color name="danger">#FFFF8A80</color>
+    <color name="success">#FF6EE7B7</color>
+    <color name="warning">#FFF2B36B</color>
+    <!-- 状态徽章软底（v1.4.45）：半透明，文字用上方实色 -->
+    <color name="success_soft">#2E6EE7B7</color>
+    <color name="warning_soft">#2EF2B36B</color>
+    <color name="danger_soft">#2EFF8A80</color>
+    <color name="icon_color">#FFFFFFFF</color>
+    <color name="splash_start">#FF0C1422</color>
+    <color name="splash_mid">#FF0A111C</color>
+    <color name="splash_end">#FF070B12</color>
+    <color name="splash_card">#F2161D29</color>
+    <color name="splash_logo_start">#FF1D4E7A</color>
+    <color name="splash_logo_end">#FF0E2740</color>
+    <!-- 光晕在深色下要更克制：过亮会糊成一团雾 -->
+    <color name="splash_glow">#2438BDF8</color>
+    <color name="splash_mode_native">#26F59E0B</color>
+    <color name="splash_mode_linux">#2610B981</color>
+    <color name="splash_pill">#1F7DD3FC</color>
+
+    <!-- 灵动岛：深色主题保持既有的「近黑胶囊 + 亮前景」外观（与 v1.4.x 一致）。
+         亮色主题对应给浅灰底 + 深前景，见 values/colors.xml。 -->
+    <!-- v1.6.34：悬浮窗统一半透明（与 values/colors.xml 的 island_bg 同值）。
+         #E6 = 90%：保留文字可读性，同时能透出底下内容。 -->
+    <color name="island_bg">#E6000000</color>
+    <color name="island_stroke">#1FFFFFFF</color>
+    <color name="island_ripple">#2EFFFFFF</color>
+    <color name="island_ring_soft">#1AFFFFFF</color>
+    <color name="island_ring_stroke">#33FFFFFF</color>
+    <color name="island_core">#59FFFFFF</color>
+    <color name="island_text">#FF9CA3AF</color>
+    <color name="island_accent">#FF7DD3FC</color>
+    <color name="island_success">#FF6EE7B7</color>
+    <!-- v1.6.47：深底上的「重活」色（重启/启动引擎），amber-400 对纯黑约 11:1 -->
+    <color name="island_warn">#FFFBBF24</color>
+    <color name="island_muted">#FF9AA5B4</color>
+    <color name="island_handle">#FF3A3A3C</color>
+    <!-- 按钮按压涟漪（暗色：淡白） -->
+    <color name="btn_ripple">#33FFFFFF</color>
+
+    <!-- 启动页专用文字与线条（v1.6.19） -->
+    <color name="splash_text">#FFE5E8DF</color>
+    <color name="splash_text_secondary">#FFABB4AB</color>
+    <color name="splash_text_muted">#FF919B92</color>
+    <color name="splash_accent">#FFA9B9A4</color>
+    <color name="splash_track">#24A9B9A4</color>
+    <color name="splash_rule">#2EE5E8DF</color>
+    <color name="splash_mode_pending">#16919B92</color>
+    <color name="splash_mode_native_tint">#FFD1AE81</color>
+    <color name="splash_mode_linux_tint">#FFB4C7AE</color>
+    <color name="splash_failure">#FFE5A398</color>
+
+    <!-- 设置页参考图设计令牌（深色，对齐纯黑底 + #1C1C1E 卡片） -->
+    <color name="settings_page_bg">#FF0B0B0C</color>
+    <color name="settings_card_bg">#FF1C1C1E</color>
+    <color name="settings_search_bg">#FF2A2A2D</color>
+    <color name="settings_divider">#FF2B2B2E</color>
+    <color name="settings_text_primary">#FFF3F3F4</color>
+    <color name="settings_text_secondary">#FF9A9A9E</color>
+    <color name="settings_value">#FF9A9A9E</color>
+    <color name="settings_chevron">#FF5C5C60</color>
+    <color name="switch_track_off">#FF4A4A4E</color>
+    <color name="switch_track_on">#FF0A84FF</color>
+    <color name="switch_thumb">#FFFFFFFF</color>
+    <color name="icon_blue">#FF0066FE</color>
+    <color name="icon_green">#FF00BD15</color>
+    <color name="icon_orange">#FFFE7400</color>
+    <color name="icon_yellow">#FFFFAF00</color>
+    <color name="icon_red">#FFE5484D</color>
+    <color name="icon_gray">#FF8E8F92</color>
+    <color name="icon_purple">#FF7B61FF</color>
+    <color name="icon_teal">#FF00BDD6</color>
+    <color name="icon_pink">#FFF0484F</color>
+
+    <color name="console_bg">#FF101418</color>
+    <color name="console_surface">#FF0D1117</color>
+    <color name="console_text">#FFC9D4E0</color>
+    <color name="console_text_dim">#FF8A94A3</color>
+    <color name="console_text_faint">#FF6B7684</color>
+    <color name="console_accent">#FF7DD3FC</color>
+    <color name="console_divider">#1FFFFFFF</color>
+
+    <!-- 彩色图标底（bg_icon_circle_* / icon_blue / icon_green…）上面的前景色。
+         与 on_accent 不同：这些底色是固定的品牌色，两套主题下都偏深，
+         所以前景恒为白 —— 不能跟随 accent 反转，否则深色主题下会变成深字压深底。 -->
+    <color name="on_chip">#FFFFFFFF</color>
+    <color name="on_chip_dim">#D9FFFFFF</color>
+</resources>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/settings_page_bg"
+    android:orientation="vertical">
+
+    <LinearLayout style="@style/Widget.Dsh.Toolbar">
+
+        <ImageView
+            android:id="@+id/btnPetBack"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/settings_back"
+            android:padding="@dimen/space_12"
+            android:src="@drawable/ic_back" />
+
+        <TextView
+            style="@style/Widget.Dsh.ToolbarTitle"
+            android:text="@string/pet_title" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <app.dsh.mobile.MaxWidthLinearLayout
+            android:id="@+id/petContentWidth"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/space_16"
+            android:paddingBottom="@dimen/space_32">
+
+            <LinearLayout
+                android:id="@+id/petContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <TextView
+                android:id="@+id/petLicense"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_18"
+                android:lineSpacingExtra="3dp"
+                android:text="@string/pet_pack_license"
+                android:textColor="@color/text_muted"
+                android:textSize="@dimen/text_caption" />
+        </app.dsh.mobile.MaxWidthLinearLayout>
+    </ScrollView>
+</LinearLayout>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Dsh" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:alertDialogTheme">@style/Theme.Dsh.Dialog</item>
+        <!-- v1.4.43：允许窗口画进挖孔区。全屏时真正的沉浸式需要它，
+             否则系统会在顶部保留一条与挖孔等高的黑边。
+             shortEdges 在显示状态栏时无副作用（状态栏本身会占位）。 -->
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+
+    <style name="Theme.Dsh.Spinner" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:popupBackground">@drawable/bg_menu_card</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <style name="Theme.Dsh.Dialog" parent="android:Theme.Material.Light.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/bg_dialog_rounded</item>
+        <item name="android:colorAccent">@color/icon_blue</item>
+        <item name="android:textColorPrimary">@color/settings_text_primary</item>
+        <item name="android:textColorSecondary">@color/settings_text_secondary</item>
+        <!-- v1.6.44：全工程 70 处 AlertDialog 共用这一条动画。
+             重构前只有 4 处手工 setWindowAnimations，其余 66 处走平台默认动画
+             （曲线与时长都不同）—— 同一个"取消/确定"弹窗，在设置页和插件商店里
+             进出节奏不一样。放到主题上，就不再依赖调用方记得加。 -->
+        <item name="android:windowAnimationStyle">@style/SettingsDialogAnimation</item>
+        <!-- 横屏不再被撑成"一条宽扁横幅"：major(横屏宽度) 收到 52%，
+             竖屏 minor 放到 76% 让正文行宽可读。 -->
+        <item name="android:windowMinWidthMajor">52%</item>
+        <item name="android:windowMinWidthMinor">76%</item>
+    </style>
+
+    <!-- 设置页（参考图 realme UI 风格） -->
+    <style name="SettingsTitle">
+        <item name="android:textSize">34sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/settings_text_primary</item>
+    </style>
+
+    <style name="SettingsRowTitle">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/settings_text_primary</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="SettingsRowSummary">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/settings_text_secondary</item>
+    </style>
+
+    <style name="SettingsValue">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/settings_value</item>
+    </style>
+
+    <style name="SettingsSwitch">
+        <item name="android:trackTint">@color/switch_track_tint</item>
+        <item name="android:thumbTint">@color/switch_thumb</item>
+    </style>
+
+    <style name="SettingsDialogAnimation">
+        <item name="android:windowEnterAnimation">@anim/dialog_in</item>
+        <item name="android:windowExitAnimation">@anim/dialog_out</item>
+    </style>
+</resources>

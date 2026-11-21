@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  按压反馈（v1.6.22）—— 取代水波纹。
+
+  为什么不用 ripple：
+  「浅色 / 深色」两张预览卡本身有 78×134dp，套 `selectableItemBackgroundBorderless`
+  时水波纹按「无边界」规则扩散，半径约等于视图对角线 —— 一点下去就是一大团浅色圆形
+  盖住整张设置卡，既不像反馈也压住了旁边未选中的那张，与这套「深灰卡片 + 圆点选中」
+  的极简风格完全不搭。因此改为**缩放到 0.96 再回弹**：位移量小、只影响点击的这一项，
+  和工程里已有的按压语言（设置页入场 0.94→1、启动遮罩 0.96）一致。
+
+  用 StateListAnimator 而不是 OnTouchListener：视图自己的点击分发不受影响，
+  手指滑出边界（state_pressed 复位）也由系统处理，不用手写 ACTION_CANCEL。
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 按下：快速收紧到 0.96，手感是「按下去」 -->
+    <item android:state_pressed="true">
+        <set>
+            <objectAnimator
+                android:duration="90"
+                android:interpolator="@android:interpolator/decelerate_quad"
+                android:propertyName="scaleX"
+                android:valueTo="0.96"
+                android:valueType="floatType" />
+            <objectAnimator
+                android:duration="90"
+                android:interpolator="@android:interpolator/decelerate_quad"
+                android:propertyName="scaleY"
+                android:valueTo="0.96"
+                android:valueType="floatType" />
+        </set>
+    </item>
+
+    <!-- 松开/取消：稍慢一点回弹到 1，避免回弹比按下还急造成的「弹一下」 -->
+    <item>
+        <set>
+            <objectAnimator
+                android:duration="170"
+                android:interpolator="@android:interpolator/decelerate_quad"
+                android:propertyName="scaleX"
+                android:valueTo="1"
+                android:valueType="floatType" />
+            <objectAnimator
+                android:duration="170"
+                android:interpolator="@android:interpolator/decelerate_quad"
+                android:propertyName="scaleY"
+                android:valueTo="1"
+                android:valueType="floatType" />
+        </set>
+    </item>
+</selector>

@@ -1,0 +1,39 @@
+DSH Mobile — 完整 Android 工程
+=============================
+
+包内容
+- app/                 应用模块（build.gradle.kts、proguard-rules.pro、src）
+- build.gradle.kts     根构建脚本
+- settings.gradle.kts  仓库配置（含阿里云镜像）
+- gradle.properties    全局 Gradle 属性
+- build-debug.sh       本机构建入口（会传 -Ppackage/-Pabi/-PruntimeZip）
+- scripts/             工具链重建、引擎打包、快照等脚本
+- debug-signing/      固定调试签名（SHA-256 8453a192…28bf）
+- app-debug.apk        与源码同版本的可安装产物
+- CHANGES.txt          本次修复说明
+
+构建前提
+- JDK 17
+- Gradle 8.9（工程未带 wrapper，直接调用 gradle 即可；也可 `gradle wrapper --gradle-version 8.9` 自行生成）
+- Android SDK：platform 36、build-tools 35.0.1（AGP 默认还会要 34.0.0）、NDK 26.1.10909125、CMake 3.22.1
+- local.properties 需自行创建：
+    sdk.dir=<你的 SDK 路径>
+    ndk.dir=<你的 NDK 路径>
+    cmake.dir=<你的 CMake 路径>
+
+在 x86_64 机器上构建
+    gradle :app:assembleDebug -Ppackage=noruntime -Pabi=arm64-v8a
+
+在 aarch64 机器上构建
+    官方 SDK/NDK 工具只有 x86_64，需要 qemu 用户态封装：
+    1. bash scripts/setup-aarch64-toolchain.sh
+    2. 按脚本结束提示配置 local.properties 与 ~/.gradle/gradle.properties
+    3. bash build-debug.sh
+
+关于 runtime
+- 默认 package=noruntime：APK 不含运行时包，首次启动由用户导入。
+- package=full：需要 runtime-arm64-v8a.zip 或用 -PruntimeZip=<path> 指定。
+
+签名
+- 使用 debug-signing/dsh-debug.keystore，applicationId=app.dsh.mobile.dev。
+- 缺私钥时脚本会退化为本机 ~/.android/debug.keystore（仅本地可覆盖安装）。

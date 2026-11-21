@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 真 PTY 终端页（对齐 DSHA 的 PtyTerminalFragment 布局）：
+     顶部：返回 + 标题 + 字号调节；其下标签行 + 新建；
+     中间 Termux TerminalView；底部横向扩展键。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/console_bg"
+    android:paddingHorizontal="@dimen/space_12"
+    android:paddingTop="@dimen/space_6"
+    android:paddingBottom="@dimen/space_8">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/btnBack"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:padding="@dimen/space_12"
+            android:src="@drawable/ic_back"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/settings_back" />
+
+        <TextView
+            android:id="@+id/pty_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_chip"
+            android:ellipsize="end"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:paddingHorizontal="@dimen/space_12"
+            android:paddingVertical="@dimen/space_8"
+            android:text="@string/terminal_title"
+            android:textColor="@color/console_text_dim"
+            android:textSize="@dimen/text_body_s" />
+
+        <TextView
+            android:id="@+id/pty_font_dec"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="@dimen/space_6"
+            android:gravity="center"
+            android:paddingHorizontal="@dimen/space_12"
+            android:text="@string/terminal_font_smaller"
+            android:textColor="@color/console_text_dim"
+            android:textSize="@dimen/text_body_s"
+            android:background="?android:attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/pty_font_inc"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:paddingHorizontal="@dimen/space_12"
+            android:text="@string/terminal_font_larger"
+            android:textColor="@color/console_text_dim"
+            android:textSize="@dimen/text_body_s"
+            android:background="?android:attr/selectableItemBackground" />
+    </LinearLayout>
+
+    <!-- 标签行：可横向滚动的会话胶囊 + 新建按钮 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingBottom="@dimen/space_6">
+
+        <HorizontalScrollView
+            android:id="@+id/terminal_tabs_scroll"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/terminal_tabs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <TextView
+            android:id="@+id/terminal_new"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="64dp"
+            android:minHeight="48dp"
+            android:gravity="center"
+            android:paddingHorizontal="@dimen/space_12"
+            android:text="@string/terminal_new"
+            android:textColor="@color/console_accent"
+            android:textSize="@dimen/text_body_s"
+            android:background="?android:attr/selectableItemBackground" />
+    </LinearLayout>
+
+    <!-- 终端视口 -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@drawable/bg_terminal"
+        android:padding="@dimen/space_6">
+
+        <com.termux.view.TerminalView
+            android:id="@+id/pty_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/console_surface"
+            android:focusable="true"
+            android:focusableInTouchMode="true" />
+
+        <TextView
+            android:id="@+id/pty_empty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="@dimen/space_24"
+            android:text="@string/terminal_empty"
+            android:textColor="@color/console_text_faint"
+            android:textSize="@dimen/text_body_s"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <!-- 扩展键：软键盘没有 Esc/Ctrl/方向键，缺了这排 TUI 基本没法用 -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_8"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/pty_keys"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+    </HorizontalScrollView>
+</LinearLayout>
